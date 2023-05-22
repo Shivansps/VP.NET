@@ -54,6 +54,7 @@ namespace VP.NET
                     info.size = 0;
                     info.timestamp = 0;
                     files = new List<VPFile>();
+                    vp.numberFolders++;
                     break;
                 case VPFileType.BackDir:
                     info.size = 0;
@@ -62,6 +63,7 @@ namespace VP.NET
                     break;
                 case VPFileType.File:
                     info.size = size;
+                    vp.numberFiles++;
                     info.timestamp = timestamp;
                     break;
             }
@@ -163,7 +165,7 @@ namespace VP.NET
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public async Task ExtractRecursiveAsync(string path)
+        public async Task ExtractRecursiveAsync(string path, Action<string, int, int>? progressCallback = null)
         {
             switch (type)
             {
@@ -182,6 +184,8 @@ namespace VP.NET
                     }
                     break;
                 case VPFileType.File:
+                    if (progressCallback != null)
+                        progressCallback(info.name, 1, vp!.numberFiles);
                     await ExtractFile(path + Path.DirectorySeparatorChar + info.name);
                     break;
                 case VPFileType.BackDir:
@@ -265,14 +269,15 @@ namespace VP.NET
         internal bool CheckHaveToCompress()
         {
             if (type != VPFileType.File)
-                return false; 
+                return false;
 
-            if(info.size < VPCompression.MinimumSize) 
+            if (info.size < VPCompression.MinimumSize)
                 return false;
 
             int periodPos = info.name.LastIndexOf('.');
-            if (periodPos > 0) {
-                string ext = info.name.ToLower().Substring(periodPos, 4);
+            if (periodPos > 0)
+            {
+                string ext = info.name.ToLower().Substring(periodPos, info.name.Length - periodPos);
                 if (vp!.compression && !compressionInfo.header.HasValue && VPCompression.ExtensionIgnoreList.IndexOf(ext) == -1)
                 {
                     return true;

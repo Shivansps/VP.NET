@@ -6,6 +6,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace VP.NET
 {
@@ -20,6 +21,7 @@ namespace VP.NET
     public struct VPIndexEntry
     {
         public string name; //32 with null terminator
+        public byte[]? nameBytes; //keep the original 32 bytes
         public int timestamp; //unix
         public int size;
         public int offset; //from start of the file
@@ -29,7 +31,9 @@ namespace VP.NET
     {
         public List<VPFile> vpFiles = new List<VPFile>();
         public string? vpFilePath;
-        internal bool compression = false;
+        public int numberFiles = 0;
+        public int numberFolders = 0;
+        public bool compression = false;
 
         /// <summary>
         /// Creates a new empty VP file
@@ -70,6 +74,8 @@ namespace VP.NET
                 if (!File.Exists(path))
                     throw new IOException("File " + path + " does not exist!");
                 vpFiles.Clear();
+                numberFiles = 0;
+                numberFolders = 0;
                 vpFilePath = path;
                 var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 8192);
                 var header = ReadHeader(file);
@@ -90,11 +96,13 @@ namespace VP.NET
         /// </summary>
         /// <param name="destFolderPath"></param>
         /// <returns></returns>
-        public async Task ExtractVpAsync(string destFolderPath)
+        public async Task ExtractVpAsync(string destFolderPath, Action<string,int,int>? progressCallback = null)
         {
+            if(progressCallback != null)
+                progressCallback("", 0, numberFiles);
             foreach(var file in vpFiles)
             {
-                await file.ExtractRecursiveAsync(destFolderPath);
+                await file.ExtractRecursiveAsync(destFolderPath, progressCallback);
             }
         }
 
@@ -104,13 +112,13 @@ namespace VP.NET
         /// Any file marked for deletion will be removed
         /// </summary>
         /// <returns></returns>
-        public async Task SaveAsync()
+        public async Task SaveAsync(Action<string, int>? progressCallback = null, CancellationTokenSource? cancelSource = null)
         { 
             if(vpFilePath == null || vpFilePath.Trim() == string.Empty)
             {
                 throw new Exception("VP file path is unset, use SaveAS().");
             }
-            await SaveAsAsync(vpFilePath);
+            await SaveAsAsync(vpFilePath,progressCallback, cancelSource);
         }
 
         /// <summary>
@@ -120,7 +128,7 @@ namespace VP.NET
         /// </summary>
         /// <param name="destPath"></param> 
         /// <returns></returns>
-        public async Task SaveAsAsync(string destPath)
+        public async Task SaveAsAsync(string destPath, Action<string, int>? progressCallback = null, CancellationTokenSource? cancelSource = null)
         {
             var tempPath = destPath + ".tmp";
             int bufferSize = 8192;
@@ -128,6 +136,11 @@ namespace VP.NET
             VPHeader header;
             header.header = "VPVP";
             header.version = compression ? 3 : 2;
+
+            if (progressCallback != null)
+            {
+                progressCallback("", numberFiles);
+            } 
 
             var index = new List<VPIndexEntry>();
 
@@ -144,7 +157,17 @@ namespace VP.NET
 
             foreach (var file in vpFiles)
             {
-                await SaveRecursive(file, vp, bufferSize, index);
+                if (cancelSource != null && cancelSource.IsCancellationRequested)
+                {
+                    break;
+                }
+                await SaveRecursive(file, vp, bufferSize, index, progressCallback, cancelSource);
+            }
+
+            if (cancelSource != null && cancelSource.IsCancellationRequested)
+            {
+                vp.Dispose();
+                return;
             }
 
             /* Write Index */
@@ -154,21 +177,27 @@ namespace VP.NET
 
             foreach (var entry in index)
             {
-                var name = entry.name;
-                if(name.Length > 31)
-                {
-                    name = entry.name.Substring(0, 31);
-                }
-                name=name.PadRight(32, '\0');
-
                 var offBytes = BitConverter.GetBytes(entry.offset);
                 await vp.WriteAsync(offBytes, 0, 4);
 
                 var sizeBytes = BitConverter.GetBytes(entry.size);
                 await vp.WriteAsync(sizeBytes, 0, 4);
 
-                var nameBytes = Encoding.ASCII.GetBytes(name);
-                await vp.WriteAsync(nameBytes, 0, 32);
+                if (entry.nameBytes == null || Encoding.ASCII.GetString(entry.nameBytes).Split('\0')[0] != entry.name)
+                {
+                    var name = entry.name;
+                    if (name.Length > 31)
+                    {
+                        name = entry.name.Substring(0, 31);
+                    }
+                    name = name.PadRight(32, '\0');
+                    var nameBytes = Encoding.ASCII.GetBytes(name);
+                    await vp.WriteAsync(nameBytes, 0, 32);
+                }
+                else
+                {
+                    await vp.WriteAsync(entry.nameBytes, 0, 32);
+                }
 
                 var timeBytes = BitConverter.GetBytes(entry.timestamp);
                 await vp.WriteAsync(timeBytes, 0, 4);
@@ -224,25 +253,37 @@ namespace VP.NET
             }
         }
 
-        private async Task SaveRecursive(VPFile file, Stream vp, int bufferSize, List<VPIndexEntry> index)
+        private async Task SaveRecursive(VPFile file, Stream vp, int bufferSize, List<VPIndexEntry> index, Action<string, int>? progressCallback = null, CancellationTokenSource? cancelSource = null)
         {
             if (!file.delete)
             {
                 switch (file.type)
                 {
                     case VPFileType.Directory:
-                        file.info.offset = (int)vp.Position;
+                        file.info.offset = file.info.offset != 0 ? (int)vp.Position : 0 ;
                         index.Add(file.info);
                         foreach (var subfile in file.files!)
                         {
-                            await SaveRecursive(subfile, vp, bufferSize, index);
+                            if (cancelSource != null && cancelSource.IsCancellationRequested)
+                            {
+                                return;
+                            }
+                            await SaveRecursive(subfile, vp, bufferSize, index, progressCallback, cancelSource);
                         }
                         break;
                     case VPFileType.BackDir:
-                        file.info.offset = (int)vp.Position;
+                        file.info.offset = file.info.offset != 0 ? (int)vp.Position : 0;
                         index.Add(file.info);
                         break;
                     case VPFileType.File:
+                        if (progressCallback != null)
+                        {
+                            progressCallback(file.info.name, numberFiles);
+                        }
+                        if (cancelSource != null && cancelSource.IsCancellationRequested)
+                        {
+                            return;
+                        }
                         if (file.fullpath == null)
                         {
                             if (!File.Exists(vpFilePath))
@@ -256,7 +297,6 @@ namespace VP.NET
                             {
                                 throw new Exception("Unable to read vp file : " + vpFilePath);
                             }
-
 
                             sourceVP.Seek(file.info.offset, SeekOrigin.Begin);
 
@@ -484,7 +524,8 @@ namespace VP.NET
                     var entry = new VPIndexEntry();
                     entry.offset = br.ReadInt32();
                     entry.size = br.ReadInt32();
-                    entry.name = Encoding.ASCII.GetString(br.ReadBytes(32)).Split('\0')[0];
+                    entry.nameBytes = br.ReadBytes(32);
+                    entry.name = Encoding.ASCII.GetString(entry.nameBytes).Split('\0')[0];
                     entry.timestamp = br.ReadInt32();
                     vpIndex.Add(entry);
                 }

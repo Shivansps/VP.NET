@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:VP.NET.GUI.ViewModels"
+		xmlns:vp="using:VP.NET"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -12,6 +13,42 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
+	<Grid RowDefinitions="Auto,Auto,*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+		<Menu Name="Topbar" Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Left">
+			<MenuItem Header="File">
+				<MenuItem Header="Open..." Command="{Binding Open}"/>
+				<Separator/>
+				<MenuItem Header="Save" Command="{Binding Save}"/>
+				<MenuItem Header="Save As..."/>
+				<Separator/>
+				<MenuItem Header="Exit"/>
+			</MenuItem>
+			<MenuItem Header="Utils">
+				<MenuItem Header="Compress Folder"/>
+				<MenuItem Header="Decompress Folder"/>
+			</MenuItem>
+		</Menu>
+		<Menu Name="Menubar" Height="80" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left">
+			<MenuItem Header="" Width="80"/>
+			<MenuItem Header="" Width="80" />
+		</Menu>
+		
+		<TreeView Grid.Row="2" Items="{Binding WorkingFiles}">
+			<TreeView.Styles>
+				<Style Selector="TreeViewItem">
+					<Setter Property="IsExpanded" Value="True" />
+				</Style>
+			</TreeView.Styles>
+			<TreeView.DataTemplates>
+				<TreeDataTemplate DataType="vm:VpContainerViewModel" ItemsSource="{Binding files}">
+					<TextBlock FontWeight="Bold" Text="{Binding path}" />
+				</TreeDataTemplate>
+				<TreeDataTemplate DataType="vm:VpFileViewModel" ItemsSource="{Binding files}">
+					<TextBlock FontWeight="Bold" Text="{Binding name}" />
+				</TreeDataTemplate>
+			</TreeView.DataTemplates>
+		</TreeView>
+		
+	</Grid>
+	
 </Window>
