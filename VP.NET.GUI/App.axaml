@@ -1,12 +1,13 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:VP.NET.GUI"
+			 RequestedThemeVariant="Light"
              x:Class="VP.NET.GUI.App">
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <FluentTheme Mode="Light"/>
+        <FluentTheme />
     </Application.Styles>
 </Application>
