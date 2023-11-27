@@ -56,10 +56,12 @@ async Task DecompressStandaloneFile()
     var file_in = new FileStream("D:\\repo.json.lz4", FileMode.Open, FileAccess.Read, FileShare.Read);
     var file_out = new FileStream("D:\\repo2.json", FileMode.Create, FileAccess.Write, FileShare.None);
 
-    var unCompressedSize = await VPCompression.DecompressStream(file_in, file_out);
-    Console.WriteLine("Decompressing Finished! Uncompressed Size: " + unCompressedSize + " Compressed Size: " + file_in.Length);
-    file_in.Dispose();
-    file_out.Dispose();
+    await Task.Run(() => {
+        var unCompressedSize = VPCompression.DecompressStream(file_in, file_out);
+        Console.WriteLine("Decompressing Finished! Uncompressed Size: " + unCompressedSize + " Compressed Size: " + file_in.Length);
+        file_in.Dispose();
+        file_out.Dispose();
+    });
 }
 
 async Task CompressStandaloneFile()
@@ -67,10 +69,12 @@ async Task CompressStandaloneFile()
     var file_in = new FileStream("D:\\repo.json", FileMode.Open, FileAccess.Read,FileShare.Read);
     var file_out = new FileStream("D:\\repo.json.lz4", FileMode.Create, FileAccess.Write, FileShare.None);
 
-    var compressedSize = await VPCompression.CompressStream(file_in, file_out);
-    Console.WriteLine("Compressing Finished! Compressed Size: "+compressedSize + " Uncompressed Size: " + file_in.Length);
-    file_in.Dispose();
-    file_out.Dispose();
+    await Task.Run(() => { 
+        var compressedSize = VPCompression.CompressStream(file_in, file_out);
+        Console.WriteLine("Compressing Finished! Compressed Size: "+compressedSize + " Uncompressed Size: " + file_in.Length);
+        file_in.Dispose();
+        file_out.Dispose();
+    });
 }
 
 
