@@ -1,4 +1,6 @@
-﻿namespace VP.NET
+﻿using System.IO;
+
+namespace VP.NET
 {    
     public enum VPFileType
     {
@@ -154,6 +156,28 @@
         }
 
         /// <summary>
+        /// Returns the number of files on this VPFile
+        /// If this VPFile is a folder it returns the number of files on that folder and subfolders
+        /// otherwise it returns 1
+        /// </summary>
+        /// <returns>int</returns>
+        public int GetNumberOfFiles()
+        {
+            if(type == VPFileType.File)
+            { 
+                return 1; 
+            }
+            if(type == VPFileType.Directory && files != null && files.Count() > 0)
+            {
+                int count = 0;
+                foreach (var f in files)
+                    count += f.GetNumberOfFiles();
+                return count;
+            }
+            return 0;
+        }
+
+        /// <summary>
         /// Extracts this file or folder to path
         /// </summary>
         /// <param name="path"></param>
@@ -168,6 +192,8 @@
                         Directory.CreateDirectory(path + Path.DirectorySeparatorChar + info.name);
                         foreach (var file in files)
                         {
+                            if (progressCallback != null)
+                                progressCallback(file.info.name, 1, vp!.numberFiles);
                             await file.ExtractRecursiveAsync(path + Path.DirectorySeparatorChar + info.name);
                         }
                     }

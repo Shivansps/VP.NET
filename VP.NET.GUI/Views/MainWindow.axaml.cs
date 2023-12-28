@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using System.ComponentModel;
 
 namespace VP.NET.GUI.Views
 {

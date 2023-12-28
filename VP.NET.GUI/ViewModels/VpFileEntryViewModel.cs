@@ -2,10 +2,6 @@
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VP.NET.GUI.ViewModels
 {
@@ -13,6 +9,15 @@ namespace VP.NET.GUI.ViewModels
     {
         [ObservableProperty]
         public string name = string.Empty;
+
+        [ObservableProperty]
+        public string? fileDate = string.Empty;
+
+        [ObservableProperty]
+        public string? compression = "NO";
+
+        [ObservableProperty]
+        public bool isMarked = false;
 
         [ObservableProperty]
         private Bitmap? icon;
@@ -24,15 +29,19 @@ namespace VP.NET.GUI.ViewModels
 
         }
 
-        public void OpenFolder()
-        {
-            MainWindowViewModel.Instance!.FolderViewModel.LoadVpFolder(vpFile);
-        }
-
+        /// <summary>
+        /// Creates a VPFileEntryView from a VPFile
+        /// This creates the icons and display data for each file that is displayed on the right side
+        /// </summary>
+        /// <param name="vpFile"></param>
         public VpFileEntryViewModel(VPFile vpFile)
         {
             Name = vpFile.info.name;
-
+            FileDate = VPTime.GetDateFromUnixTimeStamp(vpFile.info.timestamp).ToString();
+            if (vpFile.compressionInfo.header.HasValue)
+            {
+                Compression = vpFile.compressionInfo.header.ToString();
+            }
             if (vpFile.type == VPFileType.Directory)
             {
                 icon = new Bitmap(AssetLoader.Open(new Uri("avares://VP.NET.GUI/Assets/icons/folder.png")));

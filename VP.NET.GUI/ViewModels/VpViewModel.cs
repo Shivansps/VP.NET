@@ -1,12 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using VP.NET.GUI.Views;
 
 namespace VP.NET.GUI.ViewModels
 {
@@ -32,28 +28,29 @@ namespace VP.NET.GUI.ViewModels
         {
             VpPath = path;
             VpContainer = new VPContainer(path);
-            Name = VpContainer.vpFilePath;
+            Name = Path.GetFileName(VpContainer.vpFilePath);
             if (VpContainer.vpFiles.Any())
             {
                 foreach (var file in VpContainer.vpFiles)
                 {
-                    files.Add(new VpViewModel(file));
+                    files.Add(new VpViewModel(file, path));
                 }
             }
         }
 
-        public VpViewModel(VPFile vpFile)
+        public VpViewModel(VPFile vpFile, string path)
         {
             try
             {
                 Name = vpFile.info.name;
                 VpFile = vpFile;
+                VpPath = path;
                 if (vpFile.files != null && vpFile.type == VPFileType.Directory)
                 {
                     foreach (var file in vpFile.files)
                     {
                         if (file.type == VPFileType.Directory)
-                            files.Add(new VpViewModel(file));
+                            files.Add(new VpViewModel(file, path));
                     }
                 }
             }
@@ -64,7 +61,12 @@ namespace VP.NET.GUI.ViewModels
 
         public void ShowFolder()
         {
-            MainWindowViewModel.Instance!.FolderViewModel.LoadVpFolder(VpFile);
+            MainWindowViewModel.Instance!.FolderViewModel.LoadVpFolder(VpFile, VpPath);
+        }
+
+        internal void RemoveFile()
+        {
+            MainWindowViewModel.Instance!.RemoveFile(this);
         }
     }
 }

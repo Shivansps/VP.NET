@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="100"
+		x:Class="VP.NET.GUI.Views.ExtractView"
+		xmlns:vm="using:VP.NET.GUI.ViewModels"
+		Icon="/Assets/avalonia-logo.ico"
+		Width="300"
+		Height="100"
+		WindowStartupLocation="CenterOwner"
+        Title="Extracting Files...">
+	
+	<Design.DataContext>
+		<vm:ExtractViewModel/>
+	</Design.DataContext>
+	
+	<StackPanel>
+		<Label Content="{Binding CurrentFileName}" FontWeight="Bold" FontSize="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+		<ProgressBar ShowProgressText="True" Minimum="0" Value="{Binding CurrentFile}" Maximum="{Binding MaxFiles}" />
+		<Button Command="{Binding Cancel}" Background="Red" FontWeight="Bold" Margin="5" HorizontalAlignment="Center">Cancel</Button>
+	</StackPanel>
+	
+</Window>

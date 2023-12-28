@@ -4,14 +4,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="VP.NET.GUI.Views.VpFileEntryView">
+             x:Class="VP.NET.GUI.Views.VpFileEntryView"
+			 Height="30">
 	<Design.DataContext>
 		<vm:VpFileEntryViewModel/>
 	</Design.DataContext>
-
-	<WrapPanel>
-		<Image Source="{Binding Icon}" MaxWidth="40" />
-		<Label Content="{Binding Name}"></Label>
-		<Button Command="{Binding OpenFolder}">Test Open</Button>
+	
+	<WrapPanel Height="30">
+		<Image VerticalAlignment="Center" Margin="5,0,0,0" Width="20" Height="30" Source="{Binding Icon}" />
+		<Label Width="250" VerticalContentAlignment="Center" FontSize="14" Margin="5,0,0,0" Content="{Binding Name}"></Label>
+		<Label Width="125" VerticalContentAlignment="Center" FontSize="12" Content="{Binding FileDate}"></Label>
+		<Label VerticalContentAlignment="Center" FontWeight="Bold" Margin="50,0,0,0" FontSize="12" Content="{Binding Compression}"></Label>
 	</WrapPanel>
 </UserControl>
