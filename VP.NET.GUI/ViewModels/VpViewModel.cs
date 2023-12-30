@@ -3,6 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using VP.NET.GUI.Models;
 using VP.NET.GUI.Views;
 
 namespace VP.NET.GUI.ViewModels
@@ -27,15 +28,21 @@ namespace VP.NET.GUI.ViewModels
 
         public VpViewModel(string path)
         {
-            VpPath = path;
-            VpContainer = new VPContainer(path);
-            Name = Path.GetFileName(VpContainer.vpFilePath);
-            if (VpContainer.vpFiles.Any())
+            try
             {
-                foreach (var file in VpContainer.vpFiles)
+                VpPath = path;
+                VpContainer = new VPContainer(path);
+                Name = Path.GetFileName(VpContainer.vpFilePath);
+                if (VpContainer.vpFiles.Any())
                 {
-                    files.Add(new VpViewModel(file, path));
+                    foreach (var file in VpContainer.vpFiles)
+                    {
+                        files.Add(new VpViewModel(file, path));
+                    }
                 }
+            }catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "VpViewModel", ex);
             }
         }
 
@@ -57,6 +64,7 @@ namespace VP.NET.GUI.ViewModels
             }
             catch (Exception ex)
             {
+                Log.Add(Log.LogSeverity.Error, "VpViewModel(2)", ex);
             }
         }
 
@@ -67,8 +75,15 @@ namespace VP.NET.GUI.ViewModels
 
         internal void RemoveFile()
         {
-            MainWindowViewModel.Instance!.RemoveFile(this);
-            MainWindow.CleanRemovedVpFromList();
+            try
+            {
+                MainWindowViewModel.Instance!.RemoveFile(this);
+                MainWindow.CleanRemovedVpFromList();
+            }
+            catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "VpViewModel.RemoveFile()", ex);
+            }
         }
     }
 }

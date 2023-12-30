@@ -34,7 +34,7 @@ namespace VP.NET.GUI.ViewModels
                 Settings.Load();
             }catch (Exception ex)
             {
-
+                Log.Add(Log.LogSeverity.Error, "MainWindowViewModel", ex);
             }
         }
 
@@ -54,41 +54,47 @@ namespace VP.NET.GUI.ViewModels
         /// </summary>
         internal async void OpenFile()
         {
-            FilePickerOpenOptions options = new FilePickerOpenOptions();
-            options.AllowMultiple = true;
-            options.Title = "Open VP files";
-            if(Settings.LastVPLoadPath != null )
+            try
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(Settings.LastVPLoadPath);
-            }
-            options.FileTypeFilter = new List<FilePickerFileType> {
+                FilePickerOpenOptions options = new FilePickerOpenOptions();
+                options.AllowMultiple = true;
+                options.Title = "Open VP files";
+                if (Settings.LastVPLoadPath != null)
+                {
+                    options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(Settings.LastVPLoadPath);
+                }
+                options.FileTypeFilter = new List<FilePickerFileType> {
                 new("VP files (*.vp, *.vpc)") { Patterns = new[] { "*.vp", "*.vpc" } },
                 new("All files (*.*)") { Patterns = new[] { "*" } }
             };
 
 
-            var result = await MainWindow.Instance!.StorageProvider.OpenFilePickerAsync(options);
+                var result = await MainWindow.Instance!.StorageProvider.OpenFilePickerAsync(options);
 
-            if (result != null && result.Count > 0)
+                if (result != null && result.Count > 0)
+                {
+                    var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
+                    if (Settings.LastVPLoadPath != newPath)
+                    {
+                        Settings.LastVPLoadPath = newPath;
+                        Settings.Save();
+                    }
+
+                    foreach (var file in result)
+                    {
+                        try
+                        {
+                            AddWorkingFile(file.Path.LocalPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Add(Log.LogSeverity.Error, "MainWindowViewModel.OpenFile(1)", ex);
+                        }
+                    }
+                }
+            }catch (Exception ex)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (Settings.LastVPLoadPath != newPath)
-                {
-                    Settings.LastVPLoadPath = newPath;
-                    Settings.Save();
-                }
-                
-                foreach (var file in result)
-                {
-                    try
-                    {
-                        AddWorkingFile(file.Path.LocalPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    }
-                }
+                Log.Add(Log.LogSeverity.Error, "MainWindowViewModel.OpenFile(2)", ex);
             }
         }
 
@@ -97,34 +103,40 @@ namespace VP.NET.GUI.ViewModels
         /// </summary>
         internal async void OpenFolder()
         {
-            FolderPickerOpenOptions options = new FolderPickerOpenOptions();
-            options.Title = "Open a folder containing VP files";
-            if (Settings.LastVPLoadPath != null)
+            try
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(Settings.LastVPLoadPath);
-            }
-            var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
+                FolderPickerOpenOptions options = new FolderPickerOpenOptions();
+                options.Title = "Open a folder containing VP files";
+                if (Settings.LastVPLoadPath != null)
+                {
+                    options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(Settings.LastVPLoadPath);
+                }
+                var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
 
-            if (result != null && result.Count > 0)
+                if (result != null && result.Count > 0)
+                {
+
+                    string[] files = Directory.GetFiles(result[0].Path.LocalPath, "*.vp*");
+                    if (Settings.LastVPLoadPath != result[0].Path.LocalPath)
+                    {
+                        Settings.LastVPLoadPath = result[0].Path.LocalPath;
+                        Settings.Save();
+                    }
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            AddWorkingFile(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Add(Log.LogSeverity.Error, "MainWindowViewModel.OpenFolder(1)", ex);
+                        }
+                    }
+                }
+            } catch (Exception ex)
             {
-
-                string[] files = Directory.GetFiles(result[0].Path.LocalPath,"*.vp*");
-                if (Settings.LastVPLoadPath != result[0].Path.LocalPath)
-                {
-                    Settings.LastVPLoadPath = result[0].Path.LocalPath;
-                    Settings.Save();
-                }
-                foreach (var file in files)
-                {
-                    try
-                    {
-                        AddWorkingFile(file);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    }
-                }
+                Log.Add(Log.LogSeverity.Error, "MainWindowViewModel.OpenFolder(2)", ex);
             }
         }
 
@@ -136,13 +148,19 @@ namespace VP.NET.GUI.ViewModels
         internal void RemoveFile(VpViewModel file)
         {
             Dispatcher.UIThread.Invoke(() =>
-            { 
-                //We are closing the file it is currently open in view?
-                if(FolderViewModel.VpFilePath == file.VpPath)
+            {
+                try
                 {
-                    FolderViewModel.ResetView();
+                    //We are closing the file it is currently open in view?
+                    if (FolderViewModel.VpFilePath == file.VpPath)
+                    {
+                        FolderViewModel.ResetView();
+                    }
+                    WorkingFiles.Remove(file);
+                }catch (Exception ex)
+                {
+                    Log.Add(Log.LogSeverity.Error, "MainWindowViewModel.RemoveFile()", ex);
                 }
-                WorkingFiles.Remove(file);
             });
         }
 

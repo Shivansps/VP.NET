@@ -36,29 +36,35 @@ namespace VP.NET.GUI.ViewModels
         /// </summary>
         public void DoubleClick()
         {
-            //Folder - Backdir navigation
-            if(SelectedItems.Count == 1)
+            try
             {
-                if (SelectedItems[0] != null && VpFilePath != null && SelectedItems[0].vpFile != null)
+                //Folder - Backdir navigation
+                if (SelectedItems.Count == 1)
                 {
-                    if (SelectedItems[0].vpFile!.type == VPFileType.Directory)
+                    if (SelectedItems[0] != null && VpFilePath != null && SelectedItems[0].vpFile != null)
                     {
-                        if (SelectedItems[0].vpFile != null && VpFilePath != null)
+                        if (SelectedItems[0].vpFile!.type == VPFileType.Directory)
                         {
-                            MainWindow.LeftPanelSelectItem(SelectedItems[0].vpFile!, VpFilePath); //Right panel navigation update selection on the left panel
-                            LoadVpFolder(SelectedItems[0].vpFile, VpFilePath!);
-                        }
+                            if (SelectedItems[0].vpFile != null && VpFilePath != null)
+                            {
+                                MainWindow.LeftPanelSelectItem(SelectedItems[0].vpFile!, VpFilePath); //Right panel navigation update selection on the left panel
+                                LoadVpFolder(SelectedItems[0].vpFile, VpFilePath!);
+                            }
 
-                    }
-                    else if(SelectedItems[0].vpFile!.type == VPFileType.BackDir && vpFile != null && vpFile.parent != null)
-                    {
-                        if (vpFile.parent != null && VpFilePath != null)
+                        }
+                        else if (SelectedItems[0].vpFile!.type == VPFileType.BackDir && vpFile != null && vpFile.parent != null)
                         {
-                            MainWindow.LeftPanelSelectItem(vpFile.parent, VpFilePath); //Right panel navigation update selection on the left panel
-                            LoadVpFolder(vpFile.parent, VpFilePath);
+                            if (vpFile.parent != null && VpFilePath != null)
+                            {
+                                MainWindow.LeftPanelSelectItem(vpFile.parent, VpFilePath); //Right panel navigation update selection on the left panel
+                                LoadVpFolder(vpFile.parent, VpFilePath);
+                            }
                         }
                     }
                 }
+            }catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "VpFolderViewModel.DoubleClick", ex);
             }
         }
 
@@ -68,27 +74,33 @@ namespace VP.NET.GUI.ViewModels
         /// <param name="vpFile"></param>
         public void LoadVpFolder(VPFile? vpFile, string vpPath)
         {
-            if (this.vpFile == null || this.vpFile != vpFile)
+            try
             {
-                Items.Clear();
-                VpFilePath = vpPath;
-                if (vpFile != null && vpFile.files != null)
+                if (this.vpFile == null || this.vpFile != vpFile)
                 {
-                    VpFileEntryViewModel? backdir = null;
-                    foreach (VPFile fentry in vpFile.files)
+                    Items.Clear();
+                    VpFilePath = vpPath;
+                    if (vpFile != null && vpFile.files != null)
                     {
-                        var vm = new VpFileEntryViewModel(fentry);
-                        Items.Add(vm);
-                        if(fentry.type == VPFileType.BackDir)
-                            backdir = vm;
+                        VpFileEntryViewModel? backdir = null;
+                        foreach (VPFile fentry in vpFile.files)
+                        {
+                            var vm = new VpFileEntryViewModel(fentry);
+                            Items.Add(vm);
+                            if (fentry.type == VPFileType.BackDir)
+                                backdir = vm;
+                        }
+                        //Move backdir to the top
+                        if (backdir != null && Items.IndexOf(backdir) != -1)
+                        {
+                            Items.Move(Items.IndexOf(backdir), 0);
+                        }
                     }
-                    //Move backdir to the top
-                    if(backdir != null && Items.IndexOf(backdir) != -1)
-                    {
-                        Items.Move(Items.IndexOf(backdir),0);
-                    }
+                    this.vpFile = vpFile;
                 }
-                this.vpFile = vpFile;
+            }catch(Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "VpFolderViewModel.LoadVpFolder", ex);
             }
         }
 
@@ -97,39 +109,45 @@ namespace VP.NET.GUI.ViewModels
         /// </summary>
         internal async void ExtractSelected()
         {
-            if (SelectedItems.Count == 0)
-                return;
-            FolderPickerOpenOptions options = new FolderPickerOpenOptions();
-            options.AllowMultiple = false;
-            options.Title = "Select the destination directory";
-            if (MainWindowViewModel.Settings.LastFileExtractionPath != null)
+            try
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.LastFileExtractionPath);
-            }
-            var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
-            var extractVpFiles = new List<VPFile>();
-            var destination = string.Empty;
-            if (result != null && result.Count > 0)
-            {
-                destination = result[0].Path.LocalPath;
-                if (MainWindowViewModel.Settings.LastFileExtractionPath != destination)
+                if (SelectedItems.Count == 0)
+                    return;
+                FolderPickerOpenOptions options = new FolderPickerOpenOptions();
+                options.AllowMultiple = false;
+                options.Title = "Select the destination directory";
+                if (MainWindowViewModel.Settings.LastFileExtractionPath != null)
                 {
-                    MainWindowViewModel.Settings.LastFileExtractionPath = destination;
-                    MainWindowViewModel.Settings.Save();
+                    options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.LastFileExtractionPath);
                 }
-            }
+                var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
+                var extractVpFiles = new List<VPFile>();
+                var destination = string.Empty;
+                if (result != null && result.Count > 0)
+                {
+                    destination = result[0].Path.LocalPath;
+                    if (MainWindowViewModel.Settings.LastFileExtractionPath != destination)
+                    {
+                        MainWindowViewModel.Settings.LastFileExtractionPath = destination;
+                        MainWindowViewModel.Settings.Save();
+                    }
+                }
 
-            foreach (var item in SelectedItems)
-            {
-                if (item.vpFile != null)
-                    extractVpFiles.Add(item.vpFile);
-            }
+                foreach (var item in SelectedItems)
+                {
+                    if (item.vpFile != null)
+                        extractVpFiles.Add(item.vpFile);
+                }
 
-            if (extractVpFiles.Count > 0 && destination != string.Empty)
+                if (extractVpFiles.Count > 0 && destination != string.Empty)
+                {
+                    var dialog = new ExtractView();
+                    dialog.DataContext = new ExtractViewModel(extractVpFiles, destination, dialog);
+                    await dialog.ShowDialog<ExtractView?>(MainWindow.Instance!);
+                }
+            }catch (Exception ex)
             {
-                var dialog = new ExtractView();
-                dialog.DataContext = new ExtractViewModel(extractVpFiles, destination, dialog);
-                await dialog.ShowDialog<ExtractView?>(MainWindow.Instance!);
+                Log.Add(Log.LogSeverity.Error, "VpFolderViewModel.ExtractSelected", ex);
             }
         }
     }

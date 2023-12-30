@@ -121,6 +121,7 @@ namespace VP.NET.GUI.ViewModels
                                 }
                                 catch (Exception ex)
                                 {
+                                    Log.Add(Log.LogSeverity.Error, "MultiToolViewModel.CompressVPCs()", ex);
                                     Dispatcher.UIThread.Invoke(() => { Message += "\nError: " + ex.Message; });
                                 }
                             }
@@ -234,6 +235,7 @@ namespace VP.NET.GUI.ViewModels
                                 }
                                 catch (Exception ex)
                                 {
+                                    Log.Add(Log.LogSeverity.Error, "MultiToolViewModel.DecompressVPCs()", ex);
                                     Dispatcher.UIThread.Invoke(() => { Message += "\nError: " + ex.Message; });
                                 }
                             }
@@ -341,6 +343,7 @@ namespace VP.NET.GUI.ViewModels
                             }
                             catch (Exception ex)
                             {
+                                Log.Add(Log.LogSeverity.Error, "MultiToolViewModel.DecompressLZ41Files()", ex);
                                 Dispatcher.UIThread.Invoke(() => { Message += "\nError: " + ex.Message; });
                             }
                         }
@@ -447,6 +450,7 @@ namespace VP.NET.GUI.ViewModels
                             }
                             catch (Exception ex)
                             {
+                                Log.Add(Log.LogSeverity.Error, "MultiToolViewModel.CompressLZ41Files()", ex);
                                 Dispatcher.UIThread.Invoke(() => { Message += "\nError: " + ex.Message; });
                             }
                         }

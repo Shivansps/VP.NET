@@ -46,6 +46,7 @@ namespace VP.NET.GUI.Models
             }
             catch (Exception ex)
             {
+                Log.Add(Log.LogSeverity.Error, "Utils.FormatBytes()", ex);
                 return string.Empty;
             }
         }

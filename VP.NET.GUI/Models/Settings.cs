@@ -24,7 +24,6 @@ namespace VP.NET.GUI.Models
         public string? ToolLastVPCompressionOpenPath { get; set; } = null;
         public string? ToolLastVPCompressionDestinationPath { get; set; } = null;
 
-
         public void Load()
         {
             try
@@ -49,14 +48,10 @@ namespace VP.NET.GUI.Models
                     }
 
                 }
-                else
-                {
-
-                }
             }
             catch (Exception ex)
             {
-
+                Log.Add(Log.LogSeverity.Error, "Settings.Load()", ex);
             }
         }
 
@@ -75,6 +70,7 @@ namespace VP.NET.GUI.Models
             }
             catch (Exception ex)
             {
+                Log.Add(Log.LogSeverity.Error, "Settings.Save()", ex);
             }
         }
     }
