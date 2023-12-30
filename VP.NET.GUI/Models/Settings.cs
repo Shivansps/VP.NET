@@ -15,6 +15,14 @@ namespace VP.NET.GUI.Models
     {
         public string? LastVPLoadPath { get; set; } = null;
         public string? LastFileExtractionPath { get; set; } = null;
+        public string? ToolLastLZ41FileDecompressionOpenPath { get; set; } = null;
+        public string? ToolLastLZ41FileDecompressionDestinationPath { get; set; } = null;
+        public string? ToolLastLZ41FileCompressionOpenPath { get; set; } = null;
+        public string? ToolLastLZ41FileCompressionDestinationPath { get; set; } = null;
+        public string? ToolLastVPDecompressionOpenPath { get; set; } = null;
+        public string? ToolLastVPDecompressionDestinationPath { get; set; } = null;
+        public string? ToolLastVPCompressionOpenPath { get; set; } = null;
+        public string? ToolLastVPCompressionDestinationPath { get; set; } = null;
 
 
         public void Load()
@@ -30,6 +38,14 @@ namespace VP.NET.GUI.Models
                     {
                         LastFileExtractionPath = tempSettings.LastFileExtractionPath;
                         LastVPLoadPath = tempSettings.LastVPLoadPath;
+                        ToolLastLZ41FileDecompressionOpenPath = tempSettings.ToolLastLZ41FileDecompressionOpenPath;
+                        ToolLastLZ41FileDecompressionDestinationPath = tempSettings.ToolLastLZ41FileDecompressionDestinationPath;
+                        ToolLastLZ41FileCompressionOpenPath = tempSettings.ToolLastLZ41FileCompressionOpenPath;
+                        ToolLastLZ41FileCompressionDestinationPath = tempSettings.ToolLastLZ41FileCompressionDestinationPath;
+                        ToolLastVPDecompressionOpenPath = tempSettings.ToolLastVPDecompressionOpenPath;
+                        ToolLastVPDecompressionDestinationPath = tempSettings.ToolLastVPDecompressionDestinationPath;
+                        ToolLastVPCompressionOpenPath = tempSettings.ToolLastVPCompressionOpenPath;
+                        ToolLastVPCompressionDestinationPath = tempSettings.ToolLastVPCompressionDestinationPath;
                     }
 
                 }

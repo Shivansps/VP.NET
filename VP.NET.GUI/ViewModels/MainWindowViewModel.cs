@@ -148,22 +148,38 @@ namespace VP.NET.GUI.ViewModels
 
         internal void DecompressLooseFiles()
         {
-
+            var dialog = new MultiToolView();
+            var dataContext = new MultiToolViewModel();
+            dialog.DataContext = dataContext;
+            _ = dialog.ShowDialog<MultiToolView?>(MainWindow.Instance!);
+            dataContext.DecompressLZ41Files();
         }
 
         internal void DecompressVPs()
         {
-
+            var dialog = new MultiToolView();
+            var dataContext = new MultiToolViewModel();
+            dialog.DataContext = dataContext;
+            _ = dialog.ShowDialog<MultiToolView?>(MainWindow.Instance!);
+            dataContext.DecompressVPCs();
         }
 
         internal void CompressLooseFiles()
         {
-
+            var dialog = new MultiToolView();
+            var dataContext = new MultiToolViewModel();
+            dialog.DataContext = dataContext;
+            _ = dialog.ShowDialog<MultiToolView?>(MainWindow.Instance!);
+            dataContext.CompressLZ41Files();
         }
 
         internal void CompressVPs()
         {
-
+            var dialog = new MultiToolView();
+            var dataContext = new MultiToolViewModel();
+            dialog.DataContext = dataContext;
+            _ = dialog.ShowDialog<MultiToolView?>(MainWindow.Instance!);
+            dataContext.CompressVPCs();
         }
     }
 }

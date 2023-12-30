@@ -6,8 +6,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="480"
         x:Class="VP.NET.GUI.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="VP.NET GUI v0.0.1-Beta"
+        Icon="/Assets/vpneticon.ico"
+        Title="VP.NET GUI v0.0.1"
 		Width="800"
 		Height="480">
 
@@ -31,19 +31,15 @@
 				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="Tools" FontWeight="Bold">
-				<MenuItem Header="Decompress .lz41 files" Command="{Binding DecompressLooseFiles}">
-
-				</MenuItem>
-				<MenuItem Header="Decompress VP (.vpc) files" Command="{Binding DecompressVPs}">
-
-				</MenuItem>
 				
-				<MenuItem Header="Compress .lz41 files" Command="{Binding CompressLooseFiles}">
+				<MenuItem Header="Decompress .lz41 files" Command="{Binding DecompressLooseFiles}"></MenuItem>
 
-				</MenuItem>
-				<MenuItem Header="Compress VP (.vp) files" Command="{Binding CompressVPs}">
-
-				</MenuItem>
+				<MenuItem Header="Compress .lz41 files" Command="{Binding CompressLooseFiles}"></MenuItem>
+				
+				<MenuItem Header="Decompress VP (.vpc) files" Command="{Binding DecompressVPs}"></MenuItem>
+				
+				<MenuItem Header="Compress VP (.vp) files" Command="{Binding CompressVPs}"></MenuItem>
+				
 			</MenuItem>
 		</Menu>
 

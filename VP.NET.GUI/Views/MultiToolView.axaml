@@ -2,21 +2,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
         x:Class="VP.NET.GUI.Views.MultiToolView"
 		xmlns:vm="using:VP.NET.GUI.ViewModels"
-		Icon="/Assets/avalonia-logo.ico"
-		Width="400"
-		Height="200"
+		Icon="/Assets/vpneticon.ico"
+		Width="500"
+		MinWidth="500"
+		Height="320"
+		MinHeight="320"
 		WindowStartupLocation="CenterOwner"
-        Title="MultiToolView">
+        Title="{Binding Title}">
 	
 	<Design.DataContext>
 		<vm:MultiToolViewModel/>
 	</Design.DataContext>
 
-	<StackPanel>
-		
-	</StackPanel>
+	<Grid RowDefinitions="Auto, Auto, Auto *, Auto" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+		<ProgressBar Grid.Row="0" Minimum="0" Maximum="{Binding ProgressMax}" Value="{Binding ProgressCurrent}"  Margin="20,10,20,10" Height="20" ShowProgressText="True"></ProgressBar>
+		<ProgressBar Grid.Row="1" IsVisible="{Binding Progress2Max}" Minimum="0" Maximum="{Binding Progress2Max}" Value="{Binding Progress2Current}"  Margin="20,0,20,0" Height="20" ShowProgressText="True"></ProgressBar>
+		<Label HorizontalContentAlignment="Center" Content="{Binding Progress2Filename}" Grid.Row="2" Margin="5" FontSize="10" FontWeight="Bold"></Label>
+		<TextBox Grid.Row="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" CaretIndex="{Binding Message.Length}" IsReadOnly="True" FontWeight="Bold" FontSize="12" Text="{Binding Message}" MinHeight="200" Margin="5"/>
+		<Button Margin="5" Grid.Row="4" IsVisible="{Binding CancelVisible}" Command="{Binding Cancel}" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Red" FontWeight="Black">Cancel</Button>
+	</Grid>
 	
 </Window>
