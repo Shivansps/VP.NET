@@ -12,3 +12,18 @@ How to use
 
 The examples has been written on a console test app available here:<br />
 https://github.com/Shivansps/VP.NET/blob/main/VP.NET.Examples/Program.cs
+
+<br />
+<br />
+# VP.NET.GUI<br />
+![VP.NET.GUI](https://i.imgur.com/Seau5Jv.png)
+<br />
+GUI Program for the VP.NET lib, supports handling .VP and .VPC files
+<br />
+<br />
+Current Freatures:<br />
+-Loading Multiple VPs and VPC<br />
+-Viewing VPs/VPC and navigate the folder structure<br />
+-Extracting files from regular vp and vpc<br />
+-Compressing and decompressing VP/VPC<br />
+-Comrpessing and decompression .lz41 files<br />
