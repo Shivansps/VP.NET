@@ -29,16 +29,10 @@
 				-->
 				<TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Height="20" Margin="5,0,0,0" TextWrapping="Wrap" Text="{Binding Name}" ToolTip.Tip="{Binding VpPath}"/>
 			</WrapPanel>
-			<TreeView Name="VPTree" ItemsSource="{Binding Files}" >
+			<TreeView Name="VPTree" ItemsSource="{Binding Files}">
 				<TreeView.Styles>
 					<Style Selector="TreeViewItem">
 						<Setter Property="IsExpanded" Value="true" />
-					</Style>
-					<Style Selector="TreeViewItem[IsKeyboardFocusWithin=True]">
-						<Setter Property="IsSelected" Value="True"/>
-					</Style>
-					<Style Selector="TreeViewItem[IsKeyboardFocusWithin=False]">
-						<Setter Property="IsSelected" Value="False"/>
 					</Style>
 				</TreeView.Styles>
 				<TreeView.DataTemplates>

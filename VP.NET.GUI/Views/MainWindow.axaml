@@ -48,7 +48,7 @@
 		<Grid Grid.Row="1" ColumnDefinitions="Auto,1,*">
 			
 			<ScrollViewer Grid.Column="0" Background="Gray">
-				<ItemsControl Margin="5" HorizontalAlignment="Left" ItemsSource="{Binding WorkingFiles}">
+				<ItemsControl Name="VPL" Margin="5" HorizontalAlignment="Left" ItemsSource="{Binding WorkingFiles}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
 							<v:VpView Content="{Binding}"/>

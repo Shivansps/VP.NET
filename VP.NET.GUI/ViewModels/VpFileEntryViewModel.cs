@@ -14,7 +14,7 @@ namespace VP.NET.GUI.ViewModels
         public string? fileDate = string.Empty;
 
         [ObservableProperty]
-        public string? compression = "NO";
+        public string? compression = string.Empty;
 
         [ObservableProperty]
         public bool isMarked = false;
@@ -38,7 +38,7 @@ namespace VP.NET.GUI.ViewModels
         {
             Name = vpFile.info.name;
             FileDate = VPTime.GetDateFromUnixTimeStamp(vpFile.info.timestamp).ToString();
-            if (vpFile.compressionInfo.header.HasValue)
+            if (vpFile.compressionInfo.header.HasValue && vpFile.type == VPFileType.File)
             {
                 Compression = vpFile.compressionInfo.header.ToString();
             }

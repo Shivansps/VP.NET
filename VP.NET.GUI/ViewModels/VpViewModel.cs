@@ -3,13 +3,14 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using VP.NET.GUI.Views;
 
 namespace VP.NET.GUI.ViewModels
 {
     public partial class VpViewModel : ViewModelBase
     {
         private VPContainer? VpContainer = null;
-        private VPFile? VpFile = null;
+        public VPFile? VpFile = null;
 
         [ObservableProperty]
         public string? vpPath = null;
@@ -61,12 +62,13 @@ namespace VP.NET.GUI.ViewModels
 
         public void ShowFolder()
         {
-            MainWindowViewModel.Instance!.FolderViewModel.LoadVpFolder(VpFile, VpPath);
+            MainWindowViewModel.Instance!.FolderViewModel.LoadVpFolder(VpFile, VpPath!);
         }
 
         internal void RemoveFile()
         {
             MainWindowViewModel.Instance!.RemoveFile(this);
+            MainWindow.CleanRemovedVpFromList();
         }
     }
 }

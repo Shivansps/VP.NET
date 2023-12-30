@@ -19,6 +19,44 @@ public partial class VpView : UserControl
         {
             vpTree.AddHandler(Gestures.TappedEvent, VpTree_PointerPressed);
         }
+        MainWindow.VPViewList.Add(this);
+    }
+
+    public void DeselectAll()
+    {
+        var vpTree = this.FindControl<TreeView>("VPTree");
+        if(vpTree != null && vpTree.ItemsSource != null)
+        {
+            var items = vpTree.GetSelfAndVisualDescendants().OfType<TreeViewItem>();
+            foreach (TreeViewItem item in items)
+            {
+                item.IsSelected = false;
+            }
+        }
+    }
+
+    public void SelectItem(VPFile vpFile)
+    {
+        var vpTree = this.FindControl<TreeView>("VPTree");
+        if (vpTree != null && vpTree.ItemsSource != null)
+        {
+            var foundElements = vpTree.GetSelfAndVisualDescendants().OfType<TreeViewItem>();
+            if (foundElements != null)
+            {
+                foreach (TreeViewItem item in foundElements)
+                {
+                    var vm = (VpViewModel?)item.DataContext;
+                    if(vm != null && vm.VpFile == vpFile)
+                    {
+                        item.IsSelected = true;
+                    }
+                    else
+                    {
+                        item.IsSelected = false;
+                    }
+                }
+            }
+        }
     }
 
     private void VpTree_PointerPressed(object? sender, RoutedEventArgs e)
@@ -33,7 +71,16 @@ public partial class VpView : UserControl
                 data?.ShowFolder();
                 e.Handled = true;
             }
-        }catch(Exception ex)
+
+            foreach(VpView vp in MainWindow.VPViewList)
+            {
+                if(vp != null && vp != this)
+                {
+                    vp.DeselectAll();
+                }
+            }
+        }
+        catch(Exception ex)
         {
 
         }

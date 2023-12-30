@@ -23,13 +23,18 @@
 		</WrapPanel>
 		<!--File List-->
 		<ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto">
-			<ListBox SelectionMode="Multiple" ItemsSource="{Binding Items}" SelectedItems="{Binding SelectedItems}">
+			<ListBox DoubleTapped="ListBox_DoubleTapped" SelectionMode="Multiple" ItemsSource="{Binding Items}" SelectedItems="{Binding SelectedItems}">
 				<ListBox.Styles>
 					<Style Selector="ListBoxItem">
 						<Setter Property="Height" Value="35"/>
 						<Setter Property="HorizontalAlignment" Value="Stretch"/>
 					</Style>
 				</ListBox.Styles>
+				<ListBox.ContextMenu>
+					<ContextMenu>
+						<MenuItem Command="{Binding ExtractSelected}" Header="Extract to dir"/>
+					</ContextMenu>
+				</ListBox.ContextMenu>
 			</ListBox>
 		</ScrollViewer>
 	</Grid>
