@@ -39,7 +39,7 @@ namespace VP.NET.GUI.ViewModels
         {
             try
             {
-                Name = vpFile.info.name;
+                Name = "_"+vpFile.info.name; //visual hack
                 FileDate = VPTime.GetDateFromUnixTimeStamp(vpFile.info.timestamp).ToString();
                 if (vpFile.compressionInfo.header.HasValue && vpFile.type == VPFileType.File)
                 {

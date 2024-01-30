@@ -7,7 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="480"
         x:Class="VP.NET.GUI.Views.MainWindow"
         Icon="/Assets/vpneticon.ico"
-        Title="VP.NET GUI v0.0.1"
+        Title="VP.NET GUI v0.0.2"
 		Width="800"
 		Height="480">
 
@@ -39,7 +39,9 @@
 				<MenuItem Header="Decompress VP (.vpc) files" Command="{Binding DecompressVPs}"></MenuItem>
 				
 				<MenuItem Header="Compress VP (.vp) files" Command="{Binding CompressVPs}"></MenuItem>
-				
+
+				<MenuItem Header="Convert folder to VP" Command="{Binding FolderToVP}"></MenuItem>
+
 			</MenuItem>
 		</Menu>
 

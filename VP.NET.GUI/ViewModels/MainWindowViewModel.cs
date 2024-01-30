@@ -199,5 +199,13 @@ namespace VP.NET.GUI.ViewModels
             _ = dialog.ShowDialog<MultiToolView?>(MainWindow.Instance!);
             dataContext.CompressVPCs();
         }
+
+        internal void FolderToVP()
+        {
+            var dialog = new FolderToVPView();
+            var dataContext = new FolderToVPViewModel();
+            dialog.DataContext = dataContext;
+            _ = dialog.ShowDialog<FolderToVPView?>(MainWindow.Instance!);
+        }
     }
 }

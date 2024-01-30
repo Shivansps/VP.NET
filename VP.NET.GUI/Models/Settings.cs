@@ -23,7 +23,8 @@ namespace VP.NET.GUI.Models
         public string? ToolLastVPDecompressionDestinationPath { get; set; } = null;
         public string? ToolLastVPCompressionOpenPath { get; set; } = null;
         public string? ToolLastVPCompressionDestinationPath { get; set; } = null;
-
+        public string? ToolLastFolderToVPFolderPath { get; set; } = null;
+        public string? ToolLastFolderToVPVPSavePath { get; set; } = null;
         public void Load()
         {
             try

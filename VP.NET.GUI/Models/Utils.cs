@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
-
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace VP.NET.GUI.Models
 {
@@ -49,6 +50,30 @@ namespace VP.NET.GUI.Models
                 Log.Add(Log.LogSeverity.Error, "Utils.FormatBytes()", ex);
                 return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// Gets the complete size of all files in a folder and subdirectories in bytes
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <returns>size in bytes or 0 if failed</returns>
+        public static async Task<long> GetSizeOfFolderInBytes(string folderPath)
+        {
+            return await Task<long>.Run(() =>
+            {
+                try
+                {
+                    if (Directory.Exists(folderPath))
+                    {
+                        return Directory.EnumerateFiles(folderPath, "*", SearchOption.AllDirectories).Sum(fileInfo => new FileInfo(fileInfo).Length);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Add(Log.LogSeverity.Warning, "KnUtils.GetSizeOfFolderInBytes", ex);
+                }
+                return 0;
+            });
         }
     }
 }

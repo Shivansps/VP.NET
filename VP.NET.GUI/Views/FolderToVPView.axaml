@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="VP.NET.GUI.Views.FolderToVPView"
+        xmlns:vm="using:VP.NET.GUI.ViewModels"
+		Icon="/Assets/vpneticon.ico"
+		Width="600"
+		MinWidth="600"
+		Height="470"
+		MinHeight="470"
+		WindowStartupLocation="CenterOwner"
+        Title="Folder to VP">
+	
+	<Design.DataContext>
+		<vm:FolderToVPViewModel/>
+	</Design.DataContext>
+	
+	<Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto,Auto" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+		<TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="10">This tool creates a VP out of a folder. The selected folder should have the "data" folder inside of it. DO NOT select the "data" folder itself as that will add all folders inside of it to the VP root and thats is not the correct VP structure. Remember that the max VP size is 2GB, if you select "compress" files will be compressed while added to the vp and the final size may be lower than the one indicated here.</TextBlock>
+		
+		<Label Grid.Row="1" Margin="5">Source Folder</Label>
+		<WrapPanel Grid.Row="2" HorizontalAlignment="Center" IsEnabled="{Binding ButtonsEnabled}" Margin="10">
+			<TextBox MinWidth="400" Text="{Binding FolderPath}"></TextBox>
+			<Button Content="Browse" Command="{Binding BrowseFolder}"></Button>
+		</WrapPanel>
+		
+		<Label Grid.Row="3" Margin="5">Destination VP</Label>
+		<WrapPanel HorizontalAlignment="Center" Grid.Row="4" IsEnabled="{Binding ButtonsEnabled}" Margin="10">
+			<TextBox MinWidth="400" Text="{Binding VPPath}"></TextBox>
+			<Button Content="Browse" Command="{Binding BrowseFile}"></Button>
+		</WrapPanel>
+		<CheckBox IsEnabled="{Binding ButtonsEnabled}" HorizontalAlignment="Center" Grid.Row="5" Margin="5" IsChecked="{Binding CompressVP}">Compress VP (Creates a .vpc)</CheckBox>
+		
+		<ProgressBar Grid.Row="6" Minimum="0" Maximum="{Binding ProgressMax}" Value="{Binding ProgressCurrent}"  Margin="20,10,20,10" Height="20" ShowProgressText="True"></ProgressBar>
+		<Label Grid.Row="7" Content="{Binding ProgressFilename}" HorizontalContentAlignment="Center"></Label>
+		<StackPanel Margin="5" HorizontalAlignment="Center" Grid.Row="8">
+			<Button Width="100" HorizontalContentAlignment="Center" IsVisible="{Binding ButtonsEnabled}" IsEnabled="{Binding CanCreate}" Content="Make VP" Command="{Binding Start}"></Button>
+			<Button Width="100" HorizontalContentAlignment="Center" IsVisible="{Binding !ButtonsEnabled}" Command="{Binding Cancel}">Cancel</Button>
+		</StackPanel>
+
+		<Label Content="{Binding FolderSize}" Grid.Row="9" HorizontalAlignment="Center" Margin="5"></Label>
+	</Grid>
+	
+</Window>
