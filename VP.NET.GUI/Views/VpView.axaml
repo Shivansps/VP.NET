@@ -17,17 +17,30 @@
 				<Button Command="{Binding RemoveFile}" BorderBrush="Black" Width="20" Height="20" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="Red" ToolTip.Tip="Close File">
 					<Image Width="20" Height="20" Source="avares://VP.NET.GUI/Assets/icons/close.png"/>
 				</Button>
-				<!--
-				<Button BorderBrush="Black" Width="20" Height="20" Margin="2,0,0,0" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="#0096FF" ToolTip.Tip="Save File">
+				<Button Command="{Binding SaveFile}" IsVisible="{Binding UnsavedChanges}" BorderBrush="Black" Width="20" Height="20" Margin="2,0,0,0" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="#0096FF" ToolTip.Tip="Save Changes">
 					<Image Width="15" Height="15" Source="avares://VP.NET.GUI/Assets/icons/save.png"/>
 				</Button>
-				-->
-				<!--
-				<Button BorderBrush="Black" Width="20" Height="20" Margin="2,0,0,0" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="White" ToolTip.Tip="File Info">
-					<Image Width="16" Height="16" Source="avares://VP.NET.GUI/Assets/icons/config.png"/>
+				<Button Command="{Binding ReloadFile}" IsVisible="{Binding UnsavedChanges}" BorderBrush="Black" Width="20" Height="20" Margin="2,0,0,0" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="DarkGoldenrod" ToolTip.Tip="Discard changes and reload file">
+					<Image Width="15" Height="15" Source="avares://VP.NET.GUI/Assets/icons/restart.png"/>
 				</Button>
-				-->
+				<Button BorderBrush="Black" Width="20" Height="20" Margin="2,0,0,0" VerticalContentAlignment="Center" VerticalAlignment="Center" Background="White" ToolTip.Tip="File info and settings">
+					<Image Width="16" Height="16" Source="avares://VP.NET.GUI/Assets/icons/config.png"/>
+					<Button.Flyout>
+						<Flyout>
+							<StackPanel Margin="5" Width="200">
+								<ToggleSwitch IsChecked="{Binding Compression}" IsCheckedChanged="ToggleSwitch_IsCheckedChanged" FontWeight="Bold" HorizontalAlignment="Center" Content="Compression"></ToggleSwitch>
+								<Label FontWeight="Bold" HorizontalAlignment="Center" >Number of Files</Label>
+								<TextBlock HorizontalAlignment="Center"  TextWrapping="Wrap" Text="{Binding NumberOfFiles}"></TextBlock>
+								<Label FontWeight="Bold" HorizontalAlignment="Center" >Number of Folders</Label>
+								<TextBlock HorizontalAlignment="Center"  TextWrapping="Wrap" Text="{Binding NumberOfFolders}"></TextBlock>
+								<Label FontWeight="Bold" HorizontalAlignment="Center" >FullPath</Label>
+								<TextBlock HorizontalAlignment="Center"  Margin="5" TextWrapping="Wrap" Text="{Binding VpPath}"></TextBlock>
+							</StackPanel>
+						</Flyout>
+					</Button.Flyout>
+				</Button>
 				<TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Height="20" Margin="5,0,0,0" TextWrapping="Wrap" Text="{Binding Name}" ToolTip.Tip="{Binding VpPath}"/>
+				<Label IsVisible="{Binding UnsavedChanges}" Margin="0,-5,0,0" Content="(*)" FontWeight="Black" ToolTip.Tip="Unsaved changes"/>
 			</WrapPanel>
 			<TreeView Name="VPTree" ItemsSource="{Binding Files}">
 				<TreeView.Styles>

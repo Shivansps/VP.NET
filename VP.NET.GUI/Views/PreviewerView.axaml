@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
+             x:Class="VP.NET.GUI.Views.PreviewerView"
+			 xmlns:vm="using:VP.NET.GUI.ViewModels"
+			 xmlns:v="using:VP.NET.GUI.Views"
+			 xmlns:anim="https://github.com/whistyun/AnimatedImage.Avalonia"
+			 Background="White">
+	
+	<Design.DataContext>
+		<vm:PreviewerViewModel/>
+	</Design.DataContext>
+
+
+	<Grid Margin="0,0,2,0" >
+		<WrapPanel ZIndex="1" HorizontalAlignment="Right" IsVisible="{Binding BarVisible}" Height="20" Background="Gray" VerticalAlignment="Top">
+			<Label IsVisible="{Binding InfoFile.Length}" Margin="1,-2,1,0" FontWeight="Bold" VerticalContentAlignment="Top" Background="DarkGray" Height="22" Content="{Binding InfoFile}"/>
+			
+			<WrapPanel Margin="0,0,20,0" IsVisible="{Binding MediaButtonsVisible}">
+				<Button Command="{Binding StopVLC}" VerticalAlignment="Center" Width="20" Height="20" ToolTip.Tip="Stops playback">
+					<Image VerticalAlignment="Center" Width="20" Height="20" Source="avares://VP.NET.GUI/Assets/icons/stop.png"></Image>
+				</Button>
+				<Button IsVisible="{Binding !MediaPaused}" Command="{Binding PauseVLC}" VerticalAlignment="Center" Width="20" Height="20" ToolTip.Tip="Pause playback">
+					<Image VerticalAlignment="Center" Width="20" Height="20" Source="avares://VP.NET.GUI/Assets/icons/pause.png"></Image>
+				</Button>
+				<Button IsVisible="{Binding MediaPaused}" Command="{Binding ResumeVLC}" VerticalAlignment="Center" Width="20" Height="20" ToolTip.Tip="Resume playback">
+					<Image VerticalAlignment="Center" Width="20" Height="20" Source="avares://VP.NET.GUI/Assets/icons/play.png"></Image>
+				</Button>
+				<Button Command="{Binding RestartVLC}" VerticalAlignment="Center" Width="20" Height="20" ToolTip.Tip="Restart playback">
+					<Image VerticalAlignment="Center" Width="15" Height="15" Source="avares://VP.NET.GUI/Assets/icons/restart.png"></Image>
+				</Button>
+			</WrapPanel>
+			
+			<Button Command="{Binding OpenExternally}" VerticalAlignment="Center" Width="20" Height="20" ToolTip.Tip="Open file in external viewer. Read-Only. Files opened in this way will be exported to a temporal location and deleted next time VP.NET starts.">
+				<Image VerticalAlignment="Center" Width="20" Height="20" Source="avares://VP.NET.GUI/Assets/icons/open_external.png"></Image>
+			</Button>
+
+		</WrapPanel>
+
+		<Slider IsVisible="{Binding MediaButtonsVisible}" Value="{Binding MediaVolume}" Minimum="0" Maximum="100" ValueChanged="Slider_ValueChanged" Margin="5,80,5,5"></Slider>
+		
+		<Image ZIndex="0" IsVisible="{Binding !PlayingAnim}" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" Source="{Binding ImageSource}"></Image>
+		<Image ZIndex="0"  IsVisible="{Binding PlayingAnim}" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" anim:ImageBehavior.AnimatedSource="{Binding Animation}" ></Image>
+		<TextBlock Margin="0,30,0,0"  Text="{Binding Error}" Foreground="Red" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
+		<TextBlock IsVisible="{Binding MediaButtonsVisible}" Margin="0,30,0,0" Text="{Binding Filename}" Foreground="Black" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
+	</Grid>
+	
+</UserControl>

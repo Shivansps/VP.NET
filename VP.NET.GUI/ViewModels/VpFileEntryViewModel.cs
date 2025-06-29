@@ -15,19 +15,42 @@ namespace VP.NET.GUI.ViewModels
         public string? fileDate = string.Empty;
 
         [ObservableProperty]
+        public string? fileSize = string.Empty;
+
+        [ObservableProperty]
         public string? compression = string.Empty;
 
         [ObservableProperty]
-        public bool isMarked = false;
+        public bool isMarkedDelete = false;
+
+        [ObservableProperty]
+        public bool isNewFile = false;
 
         [ObservableProperty]
         private Bitmap? icon;
 
         public VPFile? vpFile;
 
+        public string extension = string.Empty;
+
         public VpFileEntryViewModel()
         {
 
+        }
+
+        /// <summary>
+        /// Unflags this file for seletion
+        /// </summary>
+        internal void CancelDelete()
+        {
+            if(vpFile != null && vpFile.parent != null)
+            {
+                if(vpFile.parent.DeleteStatus() == false)
+                {
+                    vpFile.Delete(false);
+                    IsMarkedDelete = false;
+                }
+            }
         }
 
         /// <summary>
@@ -40,11 +63,6 @@ namespace VP.NET.GUI.ViewModels
             try
             {
                 Name = "_"+vpFile.info.name; //visual hack
-                FileDate = VPTime.GetDateFromUnixTimeStamp(vpFile.info.timestamp).ToString();
-                if (vpFile.compressionInfo.header.HasValue && vpFile.type == VPFileType.File)
-                {
-                    Compression = vpFile.compressionInfo.header.ToString();
-                }
                 if (vpFile.type == VPFileType.Directory)
                 {
                     icon = new Bitmap(AssetLoader.Open(new Uri("avares://VP.NET.GUI/Assets/icons/folder.png")));
@@ -53,15 +71,26 @@ namespace VP.NET.GUI.ViewModels
                 {
                     if (vpFile.type == VPFileType.File)
                     {
+                        FileDate = VPTime.GetDateFromUnixTimeStamp(vpFile.info.timestamp).ToString();
+                        FileSize = Utils.FormatBytes(vpFile.info.size);
+                        if (vpFile.compressionInfo.header.HasValue && vpFile.type == VPFileType.File)
+                        {
+                            Compression = vpFile.compressionInfo.header.ToString();
+                        }
+                        else
+                        {
+                            Compression = "NO";
+                        }
                         var nameparts = vpFile.info.name.Split(".");
-                        var extension = nameparts[nameparts.Length - 1];
-                        switch (extension.ToLower())
+                        extension = nameparts[nameparts.Length - 1].ToLower();
+                        switch (extension)
                         {
                             /* Images */
                             case "png":
                             case "jpg":
                             case "jpeg":
                             case "pcx":
+                            case "gif":
                             case "dds":
                             case "tga":
                             case "apng":

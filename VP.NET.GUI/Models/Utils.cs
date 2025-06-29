@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace VP.NET.GUI.Models
@@ -10,6 +12,46 @@ namespace VP.NET.GUI.Models
     /// </summary>
     public static class Utils
     {
+        private static readonly bool IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        private static readonly bool IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        private static readonly bool IsMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
+        public static void OpenExternal(string path)
+        {
+            try
+            {
+                using (var process = new Process())
+                {
+                    if (IsWindows)
+                    {
+                        process.StartInfo.FileName = "cmd";
+                        process.StartInfo.Arguments = $"/c start {path}";
+                    }
+                    else if (IsLinux)
+                    {
+                        process.StartInfo.FileName = "xdg-open";
+                        process.StartInfo.Arguments = path;
+                    }
+                    else if (IsMacOS)
+                    {
+                        process.StartInfo.FileName = "open";
+                        process.StartInfo.Arguments = path;
+                    }
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "Utils.OpenExternal()", ex);
+            }
+        }
+
+        public static string GetCacheFolderPath()
+        {
+            return Path.Combine(GetDataFolderPath(), "cache");
+        }
+
         /// <summary>
         /// Full path to VP NET GUI data folder
         /// </summary>

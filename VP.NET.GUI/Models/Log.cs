@@ -69,7 +69,7 @@ namespace VP.NET.GUI.Models
         /// Write a string to VS console
         /// </summary>
         /// <param name="data"></param>
-        public async static void WriteToConsole(string data)
+        public static void WriteToConsole(string data)
         {
             try
             {

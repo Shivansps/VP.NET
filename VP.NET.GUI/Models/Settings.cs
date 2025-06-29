@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -13,6 +14,7 @@ namespace VP.NET.GUI.Models
     /// </summary>
     public class Settings
     {
+        public string? LastAddFilesPath { get; set; } = null;
         public string? LastVPLoadPath { get; set; } = null;
         public string? LastFileExtractionPath { get; set; } = null;
         public string? ToolLastLZ41FileDecompressionOpenPath { get; set; } = null;
@@ -25,6 +27,9 @@ namespace VP.NET.GUI.Models
         public string? ToolLastVPCompressionDestinationPath { get; set; } = null;
         public string? ToolLastFolderToVPFolderPath { get; set; } = null;
         public string? ToolLastFolderToVPVPSavePath { get; set; } = null;
+        public bool PreviewerEnabled { get; set; } = true;
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
         public void Load()
         {
             try
@@ -46,6 +51,8 @@ namespace VP.NET.GUI.Models
                         ToolLastVPDecompressionDestinationPath = tempSettings.ToolLastVPDecompressionDestinationPath;
                         ToolLastVPCompressionOpenPath = tempSettings.ToolLastVPCompressionOpenPath;
                         ToolLastVPCompressionDestinationPath = tempSettings.ToolLastVPCompressionDestinationPath;
+                        PreviewerEnabled = tempSettings.PreviewerEnabled;
+                        LastAddFilesPath = tempSettings.LastAddFilesPath;
                     }
 
                 }
@@ -56,6 +63,7 @@ namespace VP.NET.GUI.Models
             }
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
         public void Save(bool writeIni = true)
         {
             try

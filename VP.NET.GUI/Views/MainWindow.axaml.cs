@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 using VP.NET.GUI.ViewModels;
@@ -38,6 +37,35 @@ namespace VP.NET.GUI.Views
                 if(vm != null && vm.VpPath != null && vm.VpPath == vpPath)
                 {
                     vp.SelectItem(vPFile);
+                }
+            }
+        }
+
+        public static void LeftPanelReloadItems(VPFile vPFile, string vpPath)
+        {
+            foreach (var vp in VPViewList)
+            {
+                var vm = (VpViewModel?)vp.DataContext;
+                if (vm != null && vm.VpPath != null && vm.VpPath == vpPath)
+                {
+                    var item = vp.FindItem(vPFile);
+                    if (item != null)
+                    {
+                        item.ReloadUIItems();
+                        return;
+                    }
+                }
+            }
+        }
+
+        public static void LeftPanelFlagUnsavedChanges(string vpPath)
+        {
+            foreach (var vp in VPViewList)
+            {
+                var vm = (VpViewModel?)vp.DataContext;
+                if (vm != null && vm.VpPath != null && vm.VpPath == vpPath)
+                {
+                    vm.MarkAsUnsavedChanges();
                 }
             }
         }

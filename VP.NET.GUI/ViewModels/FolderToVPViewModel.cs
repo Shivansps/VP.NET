@@ -38,6 +38,9 @@ namespace VP.NET.GUI.ViewModels
 
         }
 
+        /// <summary>
+        /// Calculate file size of a folder
+        /// </summary>
         private async void GetFolderSize()
         {
             try
@@ -54,6 +57,9 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
+        /// <summary>
+        /// Starts the process of converting a folder into a VP
+        /// </summary>
         public async void Start()
         {
             await Task.Run(async () => {
@@ -109,20 +115,24 @@ namespace VP.NET.GUI.ViewModels
         {
             FolderPickerOpenOptions options = new FolderPickerOpenOptions();
             options.Title = "Select the source folder";
-            if (MainWindowViewModel.Settings.ToolLastFolderToVPFolderPath != null)
+            if (MainWindowViewModel.settings.ToolLastFolderToVPFolderPath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastFolderToVPFolderPath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastFolderToVPFolderPath);
             }
             var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
 
             if (result != null && result.Count > 0)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastFolderToVPFolderPath != newPath)
+                try
                 {
-                    MainWindowViewModel.Settings.ToolLastFolderToVPFolderPath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    var newPath = (await result[0].GetParentAsync())?.TryGetLocalPath();
+                    if (MainWindowViewModel.settings.ToolLastFolderToVPFolderPath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastFolderToVPFolderPath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
+                catch { }
                 FolderPath = result[0].Path.LocalPath;
                 CanCreate = FolderPath.Trim().Length > 0 && VPPath.Trim().Length > 0;
                 GetFolderSize();
@@ -133,9 +143,9 @@ namespace VP.NET.GUI.ViewModels
         {
             FilePickerSaveOptions options = new FilePickerSaveOptions();
             options.Title = "Destination VP name";
-            if (MainWindowViewModel.Settings.ToolLastFolderToVPVPSavePath != null)
+            if (MainWindowViewModel.settings.ToolLastFolderToVPVPSavePath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastFolderToVPVPSavePath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastFolderToVPVPSavePath);
                 options.DefaultExtension = ".vp";
                 options.FileTypeChoices = new List<FilePickerFileType> { new("VP (*.vp)") { Patterns = new[] { "*.vp" } } };
             }
@@ -143,12 +153,16 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null)
             {
-                var newPath = (await result.GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastFolderToVPVPSavePath != newPath)
+                var newPath = (await result.GetParentAsync())?.TryGetLocalPath();
+                try
                 {
-                    MainWindowViewModel.Settings.ToolLastFolderToVPVPSavePath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    if (MainWindowViewModel.settings.ToolLastFolderToVPVPSavePath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastFolderToVPVPSavePath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
+                catch { }
                 VPPath = result.Path.LocalPath;
                 VPPath = Path.ChangeExtension(VPPath, ".vp");
                 CanCreate = FolderPath.Trim().Length > 0 && VPPath.Trim().Length > 0;

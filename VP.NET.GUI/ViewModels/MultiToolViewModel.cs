@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VP.NET.GUI.Models;
@@ -44,9 +43,9 @@ namespace VP.NET.GUI.ViewModels
             FilePickerOpenOptions options = new FilePickerOpenOptions();
             options.AllowMultiple = true;
             options.Title = "Select the .vp files you want to compress";
-            if (MainWindowViewModel.Settings.ToolLastVPCompressionOpenPath != null)
+            if (MainWindowViewModel.settings.ToolLastVPCompressionOpenPath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastVPCompressionOpenPath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastVPCompressionOpenPath);
             }
             options.FileTypeFilter = new List<FilePickerFileType> {
                 new("VP (*.vp)") { Patterns = new[] { "*.vp", "*.VP", "*.Vp" } }
@@ -58,20 +57,20 @@ namespace VP.NET.GUI.ViewModels
             if (result != null && result.Count > 0)
             {
                 var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastVPCompressionOpenPath != newPath)
+                if (MainWindowViewModel.settings.ToolLastVPCompressionOpenPath != newPath)
                 {
-                    MainWindowViewModel.Settings.ToolLastVPCompressionOpenPath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    MainWindowViewModel.settings.ToolLastVPCompressionOpenPath = newPath;
+                    MainWindowViewModel.settings.Save();
                 }
 
-                var destination = await SelectDestinationFolder(MainWindowViewModel.Settings.ToolLastVPCompressionDestinationPath).ConfigureAwait(false);
+                var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastVPCompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
                 {
-                    if (MainWindowViewModel.Settings.ToolLastVPCompressionDestinationPath != destination)
+                    if (MainWindowViewModel.settings.ToolLastVPCompressionDestinationPath != destination)
                     {
-                        MainWindowViewModel.Settings.ToolLastVPCompressionDestinationPath = destination;
-                        MainWindowViewModel.Settings.Save();
+                        MainWindowViewModel.settings.ToolLastVPCompressionDestinationPath = destination;
+                        MainWindowViewModel.settings.Save();
                     }
                     Dispatcher.UIThread.Invoke(() => {
                         Message += "Destination Folder: " + destination;
@@ -159,9 +158,9 @@ namespace VP.NET.GUI.ViewModels
             FilePickerOpenOptions options = new FilePickerOpenOptions();
             options.AllowMultiple = true;
             options.Title = "Select the .vpc files you want to decompress";
-            if (MainWindowViewModel.Settings.ToolLastVPDecompressionOpenPath != null)
+            if (MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastVPDecompressionOpenPath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath);
             }
             options.FileTypeFilter = new List<FilePickerFileType> {
                 new("Compressed VP (*.vpc)") { Patterns = new[] { "*.vpc", "*.VPC", "*.Vpc" } }
@@ -173,20 +172,20 @@ namespace VP.NET.GUI.ViewModels
             if (result != null && result.Count > 0)
             {
                 var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastVPDecompressionOpenPath != newPath)
+                if (MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath != newPath)
                 {
-                    MainWindowViewModel.Settings.ToolLastVPDecompressionOpenPath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath = newPath;
+                    MainWindowViewModel.settings.Save();
                 }
 
-                var destination = await SelectDestinationFolder(MainWindowViewModel.Settings.ToolLastVPDecompressionDestinationPath).ConfigureAwait(false);
+                var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastVPDecompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
                 {
-                    if (MainWindowViewModel.Settings.ToolLastVPDecompressionDestinationPath != destination)
+                    if (MainWindowViewModel.settings.ToolLastVPDecompressionDestinationPath != destination)
                     {
-                        MainWindowViewModel.Settings.ToolLastVPDecompressionDestinationPath = destination;
-                        MainWindowViewModel.Settings.Save();
+                        MainWindowViewModel.settings.ToolLastVPDecompressionDestinationPath = destination;
+                        MainWindowViewModel.settings.Save();
                     }
                     Dispatcher.UIThread.Invoke(() => {
                         Message += "Destination Folder: " + destination;
@@ -273,9 +272,9 @@ namespace VP.NET.GUI.ViewModels
             FilePickerOpenOptions options = new FilePickerOpenOptions();
             options.AllowMultiple = true;
             options.Title = "Select the .lz41 files you want to decompress";
-            if (MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionOpenPath != null)
+            if (MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionOpenPath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath);
             }
             options.FileTypeFilter = new List<FilePickerFileType> {
                 new("LZ41 CP Files (*.lz41)") { Patterns = new[] { "*.lz41", "*.LZ41", "*.lZ41", "*.Lz41" } }
@@ -287,20 +286,20 @@ namespace VP.NET.GUI.ViewModels
             if (result != null && result.Count > 0)
             {
                 var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionOpenPath != newPath)
+                if (MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath != newPath)
                 {
-                    MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionOpenPath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath = newPath;
+                    MainWindowViewModel.settings.Save();
                 }
 
-                var destination = await SelectDestinationFolder(MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionDestinationPath).ConfigureAwait(false);
+                var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastLZ41FileDecompressionDestinationPath).ConfigureAwait(false);
 
                 if(!String.IsNullOrEmpty(destination))
                 {
-                    if(MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionDestinationPath != destination )
+                    if(MainWindowViewModel.settings.ToolLastLZ41FileDecompressionDestinationPath != destination )
                     {
-                        MainWindowViewModel.Settings.ToolLastLZ41FileDecompressionDestinationPath = destination;
-                        MainWindowViewModel.Settings.Save();
+                        MainWindowViewModel.settings.ToolLastLZ41FileDecompressionDestinationPath = destination;
+                        MainWindowViewModel.settings.Save();
                     }
                     Dispatcher.UIThread.Invoke(() => { 
                         Message += "Destination Folder: " + destination;
@@ -380,9 +379,9 @@ namespace VP.NET.GUI.ViewModels
             FilePickerOpenOptions options = new FilePickerOpenOptions();
             options.AllowMultiple = true;
             options.Title = "Select the files you want to compress as .lz41 (.vp/.vpc not allowed)";
-            if (MainWindowViewModel.Settings.ToolLastLZ41FileCompressionOpenPath != null)
+            if (MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath != null)
             {
-                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.Settings.ToolLastLZ41FileCompressionOpenPath);
+                options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath);
             }
             options.FileTypeFilter = new List<FilePickerFileType> {
                 new("Any Files (*.*)") { Patterns = new[] { "*.*" } }
@@ -394,20 +393,20 @@ namespace VP.NET.GUI.ViewModels
             if (result != null && result.Count > 0)
             {
                 var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.Settings.ToolLastLZ41FileCompressionOpenPath != newPath)
+                if (MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath != newPath)
                 {
-                    MainWindowViewModel.Settings.ToolLastLZ41FileCompressionOpenPath = newPath;
-                    MainWindowViewModel.Settings.Save();
+                    MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath = newPath;
+                    MainWindowViewModel.settings.Save();
                 }
 
-                var destination = await SelectDestinationFolder(MainWindowViewModel.Settings.ToolLastLZ41FileCompressionDestinationPath).ConfigureAwait(false);
+                var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastLZ41FileCompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
                 {
-                    if (MainWindowViewModel.Settings.ToolLastLZ41FileCompressionDestinationPath != destination)
+                    if (MainWindowViewModel.settings.ToolLastLZ41FileCompressionDestinationPath != destination)
                     {
-                        MainWindowViewModel.Settings.ToolLastLZ41FileCompressionDestinationPath = destination;
-                        MainWindowViewModel.Settings.Save();
+                        MainWindowViewModel.settings.ToolLastLZ41FileCompressionDestinationPath = destination;
+                        MainWindowViewModel.settings.Save();
                     }
                     Dispatcher.UIThread.Invoke(() => {
                         Message += "Destination Folder: " + destination;

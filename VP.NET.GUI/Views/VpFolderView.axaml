@@ -13,17 +13,31 @@
 		<Label Grid.Row="0" FontSize="12" Content="{Binding VpFilePath}"/>
 		<!--ToolBar-->
 		<WrapPanel Grid.Row="1" Height="40" Background="LightGray">
-			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding ExtractSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Extract selected files and folder to a specific location. Any compressed file will be descompressed during extraction.">Extract Selected</Button>
+			<Button Content="New Folder" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Creates a new folder">
+				<Button.Flyout>
+					<Flyout>
+						<StackPanel Width="150">
+							<Label HorizontalAlignment="Center">Folder Name</Label>
+							<TextBox Text="{Binding NewFolderName}" Width="120" HorizontalAlignment="Center"></TextBox>
+							<Button IsEnabled="{Binding NewFolderName.Length}" Margin="5" HorizontalContentAlignment="Center" HorizontalAlignment="Center" Command="{Binding CreateFolder}" Width="80">Create</Button>
+						</StackPanel>
+					</Flyout>
+				</Button.Flyout>
+			</Button>
+			<Button Command="{Binding AddFiles}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Add files to this folder, if a file with the same name exist it will be overwritten.">Add files</Button>
+			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding ExtractSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Extract selected files and folder to a specific location. Any compressed file will be descompressed during extraction.">Extract</Button>
+			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding DeleteSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Red" Foreground="White" FontWeight="Bold" ToolTip.Tip="Delete the selected files from the VP. Changes will only be applied once you click save on the left panel.">Delete</Button>
 		</WrapPanel>
 		<!--Headers-->
 		<WrapPanel Grid.Row="2" Height="30">
 			<Label FontWeight="Bold" Width="250" VerticalContentAlignment="Top" FontSize="14" Margin="45,0,0,0" Content="Filename"></Label>
-			<Label FontWeight="Bold" VerticalContentAlignment="Top" FontSize="14" Margin="15,0,0,0" Content="Modified"></Label>
-			<Label FontWeight="Bold" VerticalContentAlignment="Top" FontSize="14" Margin="60,0,0,0" Content="Compression"></Label>
+			<Label FontWeight="Bold" Width="80" VerticalContentAlignment="Top" FontSize="14" Margin="10,0,0,0" Content="Size"></Label>
+			<Label FontWeight="Bold" VerticalContentAlignment="Top" FontSize="14" Margin="20,0,0,0" Content="Compressed"></Label>
+			<Label FontWeight="Bold" VerticalContentAlignment="Top" FontSize="14" Margin="70,0,0,0" Content="Modified"></Label>
 		</WrapPanel>
 		<!--File List-->
 		<ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto">
-			<ListBox DoubleTapped="ListBox_DoubleTapped" SelectionMode="Multiple" ItemsSource="{Binding Items}" SelectedItems="{Binding SelectedItems}">
+			<ListBox DoubleTapped="ListBox_DoubleTapped" SelectionChanged="ListBox_SelectionChanged" SelectionMode="Multiple" ItemsSource="{Binding Items}" SelectedItems="{Binding SelectedItems}">
 				<ListBox.Styles>
 					<Style Selector="ListBoxItem">
 						<Setter Property="Height" Value="35"/>

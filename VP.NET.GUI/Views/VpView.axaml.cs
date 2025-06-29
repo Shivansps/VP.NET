@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using System;
 using System.Linq;
+using VP.NET.GUI.Models;
 using VP.NET.GUI.ViewModels;
 
 namespace VP.NET.GUI.Views;
@@ -59,6 +60,27 @@ public partial class VpView : UserControl
         }
     }
 
+    public VpViewModel? FindItem(VPFile vpFile)
+    {
+        var vpTree = this.FindControl<TreeView>("VPTree");
+        if (vpTree != null && vpTree.ItemsSource != null)
+        {
+            var foundElements = vpTree.GetSelfAndVisualDescendants().OfType<TreeViewItem>();
+            if (foundElements != null)
+            {
+                foreach (TreeViewItem item in foundElements)
+                {
+                    var vm = (VpViewModel?)item.DataContext;
+                    if (vm != null && vm.VpFile == vpFile)
+                    {
+                        return vm;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private void VpTree_PointerPressed(object? sender, RoutedEventArgs e)
     {
         try
@@ -82,7 +104,17 @@ public partial class VpView : UserControl
         }
         catch(Exception ex)
         {
+            Log.Add(Log.LogSeverity.Error, "VpView.VpTree_PointerPressed", ex);
+        }
+    }
 
+    private void ToggleSwitch_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var dt = this.DataContext as VpViewModel;
+        var item = sender as ToggleSwitch;
+        if (dt != null && item != null && item.IsChecked.HasValue)
+        {
+            dt.UpdateCompressionStatus(item.IsChecked.Value);
         }
     }
 }
