@@ -43,7 +43,7 @@
 		
 		<Image ZIndex="0" IsVisible="{Binding !PlayingAnim}" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" Source="{Binding ImageSource}"></Image>
 		<Image ZIndex="0"  IsVisible="{Binding PlayingAnim}" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" anim:ImageBehavior.AnimatedSource="{Binding Animation}" ></Image>
-		<TextBlock Margin="0,30,0,0"  Text="{Binding Error}" Foreground="Red" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
+		<TextBlock Margin="0,0,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  Text="{Binding Error}" Foreground="Red" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
 		<TextBlock IsVisible="{Binding MediaButtonsVisible}" Margin="0,30,0,0" Text="{Binding Filename}" Foreground="Black" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
 	</Grid>
 	

@@ -115,6 +115,52 @@ namespace VP.NET.GUI.ViewModels
         }
 
         /// <summary>
+        /// Extract all files and folders
+        /// </summary>
+        public async void ExtractAll()
+        {
+            try
+            {
+                FolderPickerOpenOptions options = new FolderPickerOpenOptions();
+                options.AllowMultiple = false;
+                options.Title = "Select the destination directory";
+                if (MainWindowViewModel.settings.LastFileExtractionPath != null)
+                {
+                    options.SuggestedStartLocation = await MainWindow.Instance!.StorageProvider.TryGetFolderFromPathAsync(MainWindowViewModel.settings.LastFileExtractionPath);
+                }
+                var result = await MainWindow.Instance!.StorageProvider.OpenFolderPickerAsync(options);
+                var extractVpFiles = new List<VPFile>();
+                var destination = string.Empty;
+                if (result != null && result.Count > 0)
+                {
+                    destination = result[0].TryGetLocalPath()!;
+                    if (MainWindowViewModel.settings.LastFileExtractionPath != destination)
+                    {
+                        MainWindowViewModel.settings.LastFileExtractionPath = destination;
+                        MainWindowViewModel.settings.Save();
+                    }
+                }
+
+                foreach (var item in Items)
+                {
+                    if (item.vpFile != null)
+                        extractVpFiles.Add(item.vpFile);
+                }
+
+                if (extractVpFiles.Count > 0 && destination != string.Empty)
+                {
+                    var dialog = new ProgressView();
+                    dialog.DataContext = new ProgressViewModel(extractVpFiles, destination, dialog);
+                    await dialog.ShowDialog<ProgressView?>(MainWindow.Instance!);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "VpFolderViewModel.ExtractAll", ex);
+            }
+        }
+
+        /// <summary>
         /// Extract selected file entries
         /// </summary>
         internal async void ExtractSelected()

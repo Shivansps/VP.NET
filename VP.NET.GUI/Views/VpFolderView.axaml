@@ -26,7 +26,7 @@
 			</Button>
 			<Button Command="{Binding AddFiles}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Add files to this folder, if a file with the same name exist it will be overwritten.">Add files</Button>
 			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding ExtractSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Black" Foreground="White" FontWeight="Bold" ToolTip.Tip="Extract selected files and folder to a specific location. Any compressed file will be descompressed during extraction.">Extract</Button>
-			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding DeleteSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="5,4,0,0" Background="Red" Foreground="White" FontWeight="Bold" ToolTip.Tip="Delete the selected files from the VP. Changes will only be applied once you click save on the left panel.">Delete</Button>
+			<Button IsVisible="{Binding SelectedItems.Count}" Command="{Binding DeleteSelected}" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="50,4,0,0" Background="Red" Foreground="White" FontWeight="Bold" ToolTip.Tip="Delete the selected files from the VP. Changes will only be applied once you click save on the left panel.">Delete</Button>
 		</WrapPanel>
 		<!--Headers-->
 		<WrapPanel Grid.Row="2" Height="30">

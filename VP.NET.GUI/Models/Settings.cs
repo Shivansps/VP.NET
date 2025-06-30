@@ -1,14 +1,27 @@
-﻿using Avalonia.Controls;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using VP.NET.GUI.ViewModels;
 
 namespace VP.NET.GUI.Models
 {
+    public class ExternalPreviewApp
+    {
+        public string Path { get; set; } = string.Empty;
+        public string Arguments { get; set; } = string.Empty;
+        public string Extension { get; set; } = string.Empty;
+
+        public ExternalPreviewApp(string path, string arguments, string extension)
+        {
+            Path = path;
+            Arguments = arguments;
+            Extension = extension;
+        }
+    }
+
     /// <summary>
     /// Class to store VP Net GUI settings
     /// </summary>
@@ -28,6 +41,8 @@ namespace VP.NET.GUI.Models
         public string? ToolLastFolderToVPFolderPath { get; set; } = null;
         public string? ToolLastFolderToVPVPSavePath { get; set; } = null;
         public bool PreviewerEnabled { get; set; } = true;
+        public bool PreviewerTextViewer { get; set; } = true;
+        public List<ExternalPreviewApp> ExternalExtensions { get; set; } = new List<ExternalPreviewApp>();
 
         [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
         public void Load()
@@ -53,6 +68,8 @@ namespace VP.NET.GUI.Models
                         ToolLastVPCompressionDestinationPath = tempSettings.ToolLastVPCompressionDestinationPath;
                         PreviewerEnabled = tempSettings.PreviewerEnabled;
                         LastAddFilesPath = tempSettings.LastAddFilesPath;
+                        PreviewerTextViewer = tempSettings.PreviewerTextViewer;
+                        ExternalExtensions = tempSettings.ExternalExtensions;
                     }
 
                 }
@@ -63,8 +80,27 @@ namespace VP.NET.GUI.Models
             }
         }
 
+        public void Reset()
+        {
+            LastFileExtractionPath = null;
+            LastVPLoadPath = null;
+            ToolLastLZ41FileDecompressionOpenPath = null;
+            ToolLastLZ41FileDecompressionDestinationPath = null;
+            ToolLastLZ41FileCompressionOpenPath = null;
+            ToolLastLZ41FileCompressionDestinationPath = null;
+            ToolLastVPDecompressionOpenPath = null;
+            ToolLastVPDecompressionDestinationPath = null;
+            ToolLastVPCompressionOpenPath = null;
+            ToolLastVPCompressionDestinationPath = null;
+            PreviewerEnabled = true;
+            PreviewerTextViewer = true;
+            LastAddFilesPath = null;
+            ExternalExtensions.Clear();
+            Save();
+        }
+
         [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-        public void Save(bool writeIni = true)
+        public void Save()
         {
             try
             {

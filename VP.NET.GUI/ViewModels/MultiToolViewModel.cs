@@ -56,13 +56,16 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null && result.Count > 0)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.settings.ToolLastVPCompressionOpenPath != newPath)
+                try
                 {
-                    MainWindowViewModel.settings.ToolLastVPCompressionOpenPath = newPath;
-                    MainWindowViewModel.settings.Save();
+                    var newPath = (await result[0].GetParentAsync())?.TryGetLocalPath();
+                    if (MainWindowViewModel.settings.ToolLastVPCompressionOpenPath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastVPCompressionOpenPath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
-
+                catch { }
                 var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastVPCompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
@@ -102,7 +105,10 @@ namespace VP.NET.GUI.ViewModels
                                         });
                                         Progress2Current = 0;
                                         var destFilePath = Path.Combine(destination, file.Name.Replace(".vp", ".vpc", StringComparison.InvariantCultureIgnoreCase));
-                                        var vp = new VPContainer(file.Path.LocalPath);
+                                        var fpath = file.TryGetLocalPath();
+                                        if (fpath == null)
+                                            throw new Exception("Unable to determine file path.");
+                                        var vp = new VPContainer(fpath);
                                         vp.EnableCompression();
                                         await vp.SaveAsAsync(destFilePath, progress2Callback, cancellationTokenSource).ConfigureAwait(false); ;
                                         Dispatcher.UIThread.Invoke(() =>
@@ -112,7 +118,7 @@ namespace VP.NET.GUI.ViewModels
                                             {
                                                 Progress2Current = Progress2Max;
                                                 Progress2Filename = string.Empty;
-                                                Message += " - OK ( " + Utils.FormatBytes(new FileInfo(destFilePath).Length - new FileInfo(file.Path.LocalPath).Length) + " )";
+                                                Message += " - OK ( " + Utils.FormatBytes(new FileInfo(destFilePath).Length - new FileInfo(fpath).Length) + " )";
                                             }
                                             catch { }
                                         });
@@ -171,13 +177,16 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null && result.Count > 0)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath != newPath)
+                try
                 {
-                    MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath = newPath;
-                    MainWindowViewModel.settings.Save();
+                    var newPath = (await result[0].GetParentAsync())?.TryGetLocalPath();
+                    if (MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastVPDecompressionOpenPath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
-
+                catch { }
                 var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastVPDecompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
@@ -217,7 +226,10 @@ namespace VP.NET.GUI.ViewModels
                                         });
                                         Progress2Current = 0;
                                         var destFilePath = Path.Combine(destination, file.Name.Replace(".vpc", ".vp", StringComparison.InvariantCultureIgnoreCase));
-                                        var vp = new VPContainer(file.Path.LocalPath);
+                                        var fpath = file.TryGetLocalPath();
+                                        if (fpath == null)
+                                            throw new Exception("Unable to determine file path.");
+                                        var vp = new VPContainer(fpath);
                                         vp.DisableCompression();
                                         await vp.SaveAsAsync(destFilePath, progress2Callback, cancellationTokenSource).ConfigureAwait(false); ;
                                         Dispatcher.UIThread.Invoke(() =>
@@ -226,7 +238,7 @@ namespace VP.NET.GUI.ViewModels
                                             try
                                             {
                                                 Progress2Current = Progress2Max;
-                                                Message += " - OK (+ " + Utils.FormatBytes(new FileInfo(destFilePath).Length - new FileInfo(file.Path.LocalPath).Length) + " )";
+                                                Message += " - OK (+ " + Utils.FormatBytes(new FileInfo(destFilePath).Length - new FileInfo(fpath).Length) + " )";
                                             }
                                             catch { }
                                         });
@@ -285,13 +297,16 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null && result.Count > 0)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath != newPath)
+                try
                 {
-                    MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath = newPath;
-                    MainWindowViewModel.settings.Save();
+                    var newPath = (await result[0].GetParentAsync())?.TryGetLocalPath();
+                    if (MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastLZ41FileDecompressionOpenPath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
-
+                catch { }
                 var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastLZ41FileDecompressionDestinationPath).ConfigureAwait(false);
 
                 if(!String.IsNullOrEmpty(destination))
@@ -392,13 +407,16 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null && result.Count > 0)
             {
-                var newPath = (await result[0].GetParentAsync())?.Path.LocalPath;
-                if (MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath != newPath)
+                try
                 {
-                    MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath = newPath;
-                    MainWindowViewModel.settings.Save();
+                    var newPath = (await result[0].GetParentAsync())?.TryGetLocalPath();
+                    if (MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath != newPath)
+                    {
+                        MainWindowViewModel.settings.ToolLastLZ41FileCompressionOpenPath = newPath;
+                        MainWindowViewModel.settings.Save();
+                    }
                 }
-
+                catch { }
                 var destination = await SelectDestinationFolder(MainWindowViewModel.settings.ToolLastLZ41FileCompressionDestinationPath).ConfigureAwait(false);
 
                 if (!String.IsNullOrEmpty(destination))
@@ -492,7 +510,7 @@ namespace VP.NET.GUI.ViewModels
 
             if (result != null && result.Count > 0)
             {
-                return result[0].Path.LocalPath;
+                return result[0].TryGetLocalPath();
             }
 
             return null;

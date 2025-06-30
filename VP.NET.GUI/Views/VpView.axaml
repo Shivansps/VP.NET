@@ -57,6 +57,11 @@
 						</WrapPanel>
 					</TreeDataTemplate>
 				</TreeView.DataTemplates>
+				<TreeView.ContextMenu>
+					<ContextMenu>
+						<MenuItem Command="{Binding ExtractSelected}" Header="Extract to dir"/>
+					</ContextMenu>
+				</TreeView.ContextMenu>
 			</TreeView>
 			
 		</StackPanel>

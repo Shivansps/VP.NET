@@ -1,37 +1,43 @@
-﻿using Metsys.Bson;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace VP.NET.GUI.Models
 {
-    /*
-     * Reads a stream to verify if it is a valid APNG file
-     * Checks for acTL chuck presence. No other data loading is done.
-     */
+    /// <summary>
+    /// Lazy APNG Helper to check if png file is a apng
+    /// </summary>
     public class APNGHelper
     {
         private static byte[] FrameSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-        public static bool IsApng(MemoryStream ms)
+        /// <summary>
+        ///  Reads a stream to verify if it is a valid APNG file
+        ///  Checks for acTL chuck presence on the first 5000 bytes of data. No other data loading is done.
+        ///  Dosent close or disposes the stream.
+        ///  Throws a exception if the stream dosent contains a png file data
+        /// </summary>
+        /// <param name="pngStream"></param>
+        /// <returns>true if file is apng</returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsApng(Stream pngStream)
         {
-            if (!IsBytesEqual(ReadBytes(ms,FrameSignature.Length), FrameSignature))
+            if (!IsBytesEqual(ReadBytes(pngStream,FrameSignature.Length), FrameSignature))
                 throw new Exception("File signature incorrect.");
 
-            var s = Encoding.ASCII.GetString(ReadBytes(ms, 5000));
+            var bufferLength = pngStream.Length < 5000 ? (int)pngStream.Length : 5000;
+
+            var s = Encoding.ASCII.GetString(ReadBytes(pngStream, bufferLength));
             if(s.Contains("acTL"))
             {
-                ms.Seek(0, SeekOrigin.Begin);
+                pngStream.Seek(0, SeekOrigin.Begin);
                 return true;
             }
-            ms.Seek(0, SeekOrigin.Begin);
+            pngStream.Seek(0, SeekOrigin.Begin);
             return false;
         }
 
-        public static bool IsBytesEqual(byte[] byte1, byte[] byte2)
+        private static bool IsBytesEqual(byte[] byte1, byte[] byte2)
         {
             if (byte1.Length != byte2.Length)
                 return false;
@@ -44,7 +50,7 @@ namespace VP.NET.GUI.Models
             return true;
         }
 
-        public static byte[] ReadBytes(Stream ms, int count)
+        private static byte[] ReadBytes(Stream ms, int count)
         {
             var buffer = new byte[count];
 

@@ -54,6 +54,19 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
+        public void UpdatePreviewerStatus()
+        {
+            PrevViewVisible = settings.PreviewerEnabled;
+            if (!settings.PreviewerEnabled && PrevViewModel != null)
+            {
+                PrevViewModel.Reset();
+            }
+            if (settings.PreviewerEnabled && PrevViewModel == null)
+            {
+                PrevViewModel = new PreviewerViewModel();
+            }
+        }
+
         /// <summary>
         /// Add a new working file to the list of working files
         /// If the file is already open it will be skipped
@@ -302,29 +315,32 @@ namespace VP.NET.GUI.ViewModels
                 {
                     try
                     {
-                        var newPath = (await result.GetParentAsync())?.Path.LocalPath;
-                        if (settings.LastVPLoadPath != newPath)
+                        var newFolderPath = (await result.GetParentAsync())?.TryGetLocalPath();
+                        if (settings.LastVPLoadPath != newFolderPath)
                         {
-                            settings.LastVPLoadPath = newPath;
+                            settings.LastVPLoadPath = newFolderPath;
                             settings.Save();
                         }
                     }
                     catch { }
                     try
                     {
+                        var path = result.TryGetLocalPath();
+                        if (path == null)
+                            throw new Exception("Unable to determine file path");
                         var vp = new VPContainer();
                         var ext = Path.GetExtension(result.Name);
                         if (ext != null && ext.ToLower() == ".vpc")
                         {
                             vp.EnableCompression();
                         }
-                        await vp.SaveAsAsync(result.Path.LocalPath);
+                        await vp.SaveAsAsync(path);
 
                         if (PrevViewModel == null && settings.PreviewerEnabled)
                             PrevViewModel = new PreviewerViewModel(); //start previewer
                         if (settings.PreviewerEnabled)
                             PrevViewVisible = true;
-                        AddWorkingFile(result.Path.LocalPath);
+                        AddWorkingFile(path);
                     }
                     catch (Exception ex)
                     {

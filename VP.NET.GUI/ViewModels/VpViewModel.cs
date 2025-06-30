@@ -182,5 +182,10 @@ namespace VP.NET.GUI.ViewModels
                 VpContainer?.DisableCompression();
             }
         }
+
+        internal void ExtractSelected()
+        {
+            MainWindowViewModel.Instance!.FolderViewModel.ExtractAll();
+        }
     }
 }

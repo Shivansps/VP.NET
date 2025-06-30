@@ -4,9 +4,14 @@ using ImageMagick;
 using System.IO;
 using Avalonia.Media.Imaging;
 using VP.NET.GUI.Models;
-using Avalonia.Platform;
 using LibVLCSharp.Shared;
 using AnimatedImage.Avalonia;
+using System.Diagnostics;
+using System.Linq;
+using VP.NET.GUI.Views;
+using static System.Net.Mime.MediaTypeNames;
+using SkiaSharp;
+using System.Text;
 
 namespace VP.NET.GUI.ViewModels
 {
@@ -43,6 +48,10 @@ namespace VP.NET.GUI.ViewModels
         private MediaPlayer? _mediaPlayerVlc = null;
         private MemoryStream? _previewStream;
         private string _vpPath = "";
+        private string extension = "";
+        private VpFileEntryViewModel? item = null;
+        private TextViewModel? textVM = null;
+        private TextView? textDialog = null;
 
         [ObservableProperty]
         internal int mediaVolume = 100;
@@ -58,6 +67,10 @@ namespace VP.NET.GUI.ViewModels
             catch (Exception ex)
             {
                 Error = "LibVLC is not avalible";
+                if(Utils.IsLinux)
+                {
+                    Error += ". On linux you need to install the \"vlc\" and \"libvlc-dev\" packages.";
+                }
                 Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.Constructor", ex);
             }
         }
@@ -68,6 +81,7 @@ namespace VP.NET.GUI.ViewModels
             InfoFile = "";
             BarVisible = false;
             Error = "";
+            extension = "";
             ImageSource = null;
             if (_libVlc != null && _mediaPlayerVlc != null)
                 StopVLC();
@@ -78,19 +92,24 @@ namespace VP.NET.GUI.ViewModels
             Filename = "";
             MediaPaused = false;
             _vpPath = "";
+            item = null;
         }
 
         public async void StartPreview(VpFileEntryViewModel item, string vpPath)
         {
+            if (!MainWindowViewModel.settings.PreviewerEnabled)
+                return;
             Reset();
             if (item.vpFile == null || item.vpFile.type != VPFileType.File || item.IsNewFile)
                 return;
             BarVisible = true;
             _vpPath = vpPath;
+            this.item = item;
             _previewStream = new MemoryStream();
             try
             {
                 Filename = item.Name;
+                extension = item.extension;
                 switch (item.extension)
                 {
                     /* Images */
@@ -125,12 +144,11 @@ namespace VP.NET.GUI.ViewModels
                         if (_libVlc != null && _mediaPlayerVlc != null)
                         {
                             await item.vpFile.ReadToStream(_previewStream);
-                            VLCPlayback();
+                            VLCPlayback(extension);
                         }
                         else 
                         {
                             Error = "LibVLC is needed for this format";
-                            _previewStream.Dispose();
                         }
                         break;
 
@@ -139,8 +157,15 @@ namespace VP.NET.GUI.ViewModels
                     case "tbl":
                     case "tbm":
                     case "eff":
+                    case "fs2":
+                    case "fc2":
+                        await item.vpFile.ReadToStream(_previewStream);
+                        TextLoader();
+                        break;
 
+                    /* ANI */
                     case "ani":
+
                     /* Default */
                     default:
                         Error = "Unsupported format";
@@ -151,6 +176,36 @@ namespace VP.NET.GUI.ViewModels
             {
                 Error = "An exception has ocurred";
                 Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.StartPreview()", ex);
+            }
+        }
+
+        private void TextLoader()
+        {
+            if (!MainWindowViewModel.settings.PreviewerTextViewer)
+                return;
+            if (_previewStream == null)
+                return;
+            if(textVM == null)
+                textVM = new TextViewModel();
+            if (textDialog == null)
+            {
+                textDialog = new TextView();
+                textDialog.DataContext = textVM;
+            }
+            using (var reader = new StreamReader(_previewStream, Encoding.ASCII))
+            {
+                _previewStream.Position = 0;
+                textVM.Text = reader.ReadToEnd();
+                _previewStream.Position = 0;
+            }
+            try
+            {
+                textDialog.Show(MainWindow.Instance!);
+            }catch (InvalidOperationException)
+            {
+                textDialog = new TextView();
+                textDialog.DataContext = textVM;
+                textDialog.Show(MainWindow.Instance!);
             }
         }
        
@@ -181,9 +236,13 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
-        private void VLCPlayback()
+        private void VLCPlayback(string ext)
         {
             InfoFile = "LibVLC";
+            if (ext != "wav" && ext != "mp3" && ext != "aac")
+            {
+                Error = "Do not close the video window";
+            }
             _previewStream?.Seek(0, SeekOrigin.Begin);
             using var media = new Media(_libVlc!, new StreamMediaInput(_previewStream!));
             _mediaPlayerVlc!.Play(media);
@@ -195,7 +254,7 @@ namespace VP.NET.GUI.ViewModels
             try
             {
                 _mediaPlayerVlc?.Stop();
-                MediaPaused = true;
+                MediaPaused = false;
                 _previewStream?.Seek(0,SeekOrigin.Begin);
             }
             catch (Exception ex) 
@@ -234,23 +293,45 @@ namespace VP.NET.GUI.ViewModels
 
         internal void RestartVLC()
         {
-            VLCPlayback();
+            VLCPlayback(extension);
         }
 
-        internal void OpenExternally()
+        internal async void OpenExternally()
         {
             try
             {
+                if(_previewStream == null)
+                    return;
+                if(_previewStream.Length == 0)
+                {
+                    await item!.vpFile!.ReadToStream(_previewStream);
+                }
+
                 Directory.CreateDirectory(Utils.GetCacheFolderPath());
                 var dest = Path.Combine(Utils.GetCacheFolderPath(), Filename);
                 StopVLC();
-                using (var fileStream = File.Create(dest))
+
+                using (var fileStream = File.Create(dest, 8192))
                 {
                     _previewStream?.Seek(0, SeekOrigin.Begin);
                     _previewStream?.CopyTo(fileStream);
                 }
 
-                Utils.OpenExternal(dest);
+                var customExternalApp = MainWindowViewModel.settings.ExternalExtensions.FirstOrDefault(x=>x.Extension.ToLower() == extension);
+
+                if (customExternalApp == null)
+                {
+                    Utils.OpenExternal(dest);
+                }
+                else
+                {
+                    using (var process = new Process())
+                    {
+                        process.StartInfo.FileName = customExternalApp.Path;
+                        process.StartInfo.Arguments = customExternalApp.Arguments.Replace("[FILEPATH]", dest);
+                        process.Start();
+                    }
+                }
             }
             catch (Exception ex)
             {

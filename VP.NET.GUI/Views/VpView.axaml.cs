@@ -19,6 +19,7 @@ public partial class VpView : UserControl
         if(vpTree != null)
         {
             vpTree.AddHandler(Gestures.TappedEvent, VpTree_PointerPressed);
+            vpTree.AddHandler(Gestures.RightTappedEvent, VpTree_PointerPressed);
         }
         MainWindow.VPViewList.Add(this);
     }
@@ -80,7 +81,7 @@ public partial class VpView : UserControl
         }
         return null;
     }
-
+    
     private void VpTree_PointerPressed(object? sender, RoutedEventArgs e)
     {
         try
@@ -107,7 +108,7 @@ public partial class VpView : UserControl
             Log.Add(Log.LogSeverity.Error, "VpView.VpTree_PointerPressed", ex);
         }
     }
-
+    
     private void ToggleSwitch_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var dt = this.DataContext as VpViewModel;

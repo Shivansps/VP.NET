@@ -6,7 +6,6 @@
 	<!--Avalonia doesen't support TrimMode=link currently,but we are working on that https://github.com/AvaloniaUI/Avalonia/issues/6892 -->
 	<TrimMode>copyused</TrimMode>
 	<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-	<PublishTrimmed>true</PublishTrimmed>
 	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
   <ItemGroup>
@@ -40,9 +39,11 @@
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="LibVLCSharp" Version="3.9.3" />
+    <PackageReference Include="LibVLCSharp" Version="3.9.3">
+      <ExcludeAssets></ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.6.0" />
-    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IonKiwi.lz4\IonKiwi.lz4.csproj" />
