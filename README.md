@@ -29,9 +29,9 @@ Current Freatures:<br />
 -Compressing and decompression .lz41 files<br />
 -Modify VP/VPCs<br />
 -Enable/Disable VP compression<br />
--Image file previewing supporting: DDS, PCX, TGA, JPG<br />
+-Image file previewing supporting: DDS, PCX, TGA, JPG, PNG<br />
 -Animation previewing supporting: GIF and APNG<br />
--Multimedia previewing supporting: WAV, MP3, OGG, MP4 via LibVLCSharp<br />
+-Multimedia previewing supporting: WAV, MVE, MP3, OGG, MP4 via LibVLCSharp<br />
 -Text previewing supporting: LUA, TBM, TBL, EFF, FS2, FC2<br />
 -Supporting for linking external file viewers<br />
 <br />
@@ -41,5 +41,5 @@ Feature complete as of 0.9.0-Beta<br />
 
 Note for developers
 =======================
-LibVLC libs are only included for Windows on debug builds, for debug builds it is needed to manually copy the dlls to the output directory.<br />
+LibVLC libs are only included for Windows on debug builds, for release builds it is needed to manually copy the dlls to the output directory to use the media previewer.<br />
 Linux always need to have both vlc and libvlc-dev packages<br />
