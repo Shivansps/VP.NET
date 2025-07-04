@@ -20,7 +20,7 @@ VP.NET.GUI
 GUI Program for the VP.NET lib, supports handling .VP and .VPC files
 
 
-Current Freatures:<br />
+Current Features:<br />
 -Loading Multiple VPs and VPC<br />
 -Viewing VPs/VPC and navigate the folder structure<br />
 -Create new VP/VPCs<br />
@@ -30,12 +30,12 @@ Current Freatures:<br />
 -Modify VP/VPCs<br />
 -Enable/Disable VP compression<br />
 -Image file previewing supporting: DDS, PCX, TGA, JPG, PNG<br />
--Animation previewing supporting: GIF and APNG<br />
+-Animation previewing supporting: ANI, GIF and APNG<br />
 -Multimedia previewing supporting: WAV, MVE, MP3, OGG, MP4 via LibVLCSharp<br />
 -Text previewing supporting: LUA, TBM, TBL, EFF, FS2, FC2<br />
 -Supporting for linking external file viewers<br />
 <br />
-Feature complete as of 0.9.0-Beta<br />
+Feature complete as of 0.9.1-Beta. Only bug fixing will be done on the way to v1.0.<br />
 <br />
 <br />
 

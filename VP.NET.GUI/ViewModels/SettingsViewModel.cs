@@ -16,6 +16,9 @@ namespace VP.NET.GUI.ViewModels
         internal bool previewerEnabled = true;
 
         [ObservableProperty]
+        internal bool previewerLiVlcEnabled = true;
+
+        [ObservableProperty]
         internal bool previewerTextViewer = true;
 
         [ObservableProperty]
@@ -52,10 +55,18 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
+        internal void OpenLog()
+        {
+            if(File.Exists(Log.LogFilePath)) 
+                Utils.OpenExternal(Log.LogFilePath);
+        }
+
+
         private void Load()
         {
             PreviewerEnabled = MainWindowViewModel.settings.PreviewerEnabled;
             PreviewerTextViewer = MainWindowViewModel.settings.PreviewerTextViewer;
+            PreviewerLiVlcEnabled = MainWindowViewModel.settings.PreviewerLibVlcViewer;
             foreach (ExternalPreviewApp app in MainWindowViewModel.settings.ExternalExtensions)
             {
                 ExternalPreviewApps.Add(app);
@@ -65,11 +76,17 @@ namespace VP.NET.GUI.ViewModels
         public void Save()
         {
             bool oldValue = MainWindowViewModel.settings.PreviewerEnabled;
+            bool oldVlcValue = MainWindowViewModel.settings.PreviewerLibVlcViewer;
             MainWindowViewModel.settings.PreviewerEnabled = PreviewerEnabled;
             MainWindowViewModel.settings.PreviewerTextViewer = PreviewerTextViewer;
+            MainWindowViewModel.settings.PreviewerLibVlcViewer = PreviewerLiVlcEnabled;
             if (oldValue != MainWindowViewModel.settings.PreviewerEnabled)
             {
                 MainWindowViewModel.Instance?.UpdatePreviewerStatus();
+            }
+            if (oldVlcValue == false && MainWindowViewModel.settings.PreviewerLibVlcViewer)
+            {
+                MainWindowViewModel.Instance?.PreviewerEnableVlcRuntime();
             }
             MainWindowViewModel.settings.ExternalExtensions.Clear();
             foreach (ExternalPreviewApp app in ExternalPreviewApps)

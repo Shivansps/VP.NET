@@ -67,6 +67,11 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
+        public void PreviewerEnableVlcRuntime()
+        {
+            PrevViewModel?.EnableVLCLate();
+        }
+
         /// <summary>
         /// Add a new working file to the list of working files
         /// If the file is already open it will be skipped

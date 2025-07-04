@@ -7,7 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="480"
         x:Class="VP.NET.GUI.Views.MainWindow"
         Icon="/Assets/vpneticon.ico"
-        Title="VP.NET GUI v0.9.0-Beta"
+        Title="VP.NET GUI v0.9.1-Beta"
 		Width="1000"
 		Height="650"
 		IsEnabled="{Binding !DisableInput}">

@@ -12,6 +12,9 @@ using VP.NET.GUI.Views;
 using static System.Net.Mime.MediaTypeNames;
 using SkiaSharp;
 using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Threading;
 
 namespace VP.NET.GUI.ViewModels
 {
@@ -53,6 +56,8 @@ namespace VP.NET.GUI.ViewModels
         private TextViewModel? textVM = null;
         private TextView? textDialog = null;
 
+        private CancellationTokenSource? _cts = null;
+
         [ObservableProperty]
         internal int mediaVolume = 100;
 
@@ -60,9 +65,16 @@ namespace VP.NET.GUI.ViewModels
         {
             try
             {
-                _libVlc = new LibVLC();
-                _mediaPlayerVlc = new MediaPlayer(_libVlc);
-                _mediaPlayerVlc.Volume = 100;
+                if (MainWindowViewModel.settings.PreviewerLibVlcViewer)
+                {
+                    _libVlc = new LibVLC();
+                    _mediaPlayerVlc = new MediaPlayer(_libVlc);
+                    _mediaPlayerVlc.Volume = 100;
+                }
+                else
+                {
+                    Error = "LibVLC is disabled in settings.";
+                }
             }
             catch (Exception ex)
             {
@@ -75,9 +87,32 @@ namespace VP.NET.GUI.ViewModels
             }
         }
 
+        public void EnableVLCLate()
+        {
+            try
+            {
+                if (_libVlc == null && _mediaPlayerVlc == null)
+                {
+                    _libVlc = new LibVLC();
+                    _mediaPlayerVlc = new MediaPlayer(_libVlc);
+                    _mediaPlayerVlc.Volume = 100;
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = "LibVLC is not avalible";
+                if (Utils.IsLinux)
+                {
+                    Error += ". On linux you need to install the \"vlc\" and \"libvlc-dev\" packages.";
+                }
+                Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.EnableVLCLate", ex);
+            }
+        }
+
 
         public void Reset()
         {
+            _cts?.Cancel();
             InfoFile = "";
             BarVisible = false;
             Error = "";
@@ -106,6 +141,7 @@ namespace VP.NET.GUI.ViewModels
             _vpPath = vpPath;
             this.item = item;
             _previewStream = new MemoryStream();
+            _cts = new CancellationTokenSource();
             try
             {
                 Filename = item.Name;
@@ -131,6 +167,7 @@ namespace VP.NET.GUI.ViewModels
                         break;
                     case "gif":
                     case "apng":
+                    case "ani":
                         await item.vpFile.ReadToStream(_previewStream);
                         AnimationLoader(item.extension);
                         break;
@@ -141,7 +178,7 @@ namespace VP.NET.GUI.ViewModels
                     case "wav":
                     case "mp3":
                     case "aac":
-                        if (_libVlc != null && _mediaPlayerVlc != null)
+                        if (MainWindowViewModel.settings.PreviewerLibVlcViewer && _libVlc != null && _mediaPlayerVlc != null)
                         {
                             await item.vpFile.ReadToStream(_previewStream);
                             VLCPlayback(extension);
@@ -162,10 +199,6 @@ namespace VP.NET.GUI.ViewModels
                         await item.vpFile.ReadToStream(_previewStream);
                         TextLoader();
                         break;
-
-                    /* ANI */
-                    case "ani":
-
                     /* Default */
                     default:
                         Error = "Unsupported format";
@@ -233,6 +266,31 @@ namespace VP.NET.GUI.ViewModels
             {
                 Animation = new AnimatedImageSourceStream(_previewStream!);
                 PlayingAnim = true;
+            }
+            if(ext == "ani")
+            {
+                var ani = ANIHelper.ReadANI(_previewStream!);
+                if (ani != null)
+                {
+                    int f = 0;
+                    var localCts = _cts;
+                    Task.Factory.StartNew(async () => {
+                        do
+                        {
+                            if (localCts?.IsCancellationRequested == true)
+                                break;
+                            ImageSource = ani.bitmapFrames[f];
+                            await Task.Delay(1000 / ani.header.fps);
+                            f++;
+                            if (f >= ani.header.numFrames)
+                                f = 0;
+                        } while (true);
+
+                        ani.Dispose();
+                    });
+                }
+                else
+                    Error = "An error has ocurred while parsing the file";
             }
         }
 

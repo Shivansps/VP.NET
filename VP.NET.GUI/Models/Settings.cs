@@ -42,6 +42,7 @@ namespace VP.NET.GUI.Models
         public string? ToolLastFolderToVPVPSavePath { get; set; } = null;
         public bool PreviewerEnabled { get; set; } = true;
         public bool PreviewerTextViewer { get; set; } = true;
+        public bool PreviewerLibVlcViewer { get; set; } = true;
         public List<ExternalPreviewApp> ExternalExtensions { get; set; } = new List<ExternalPreviewApp>();
 
         [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
@@ -70,6 +71,7 @@ namespace VP.NET.GUI.Models
                         LastAddFilesPath = tempSettings.LastAddFilesPath;
                         PreviewerTextViewer = tempSettings.PreviewerTextViewer;
                         ExternalExtensions = tempSettings.ExternalExtensions;
+                        PreviewerLibVlcViewer = tempSettings.PreviewerLibVlcViewer;
                     }
 
                 }

@@ -25,8 +25,13 @@
 					<ToggleSwitch IsChecked="{Binding PreviewerEnabled}" Margin="0,0,0,0"/>
 
 					<StackPanel IsVisible="{Binding PreviewerEnabled}">
-						
-						<Label Margin="-3,0,0,0" FontWeight="Bold">Text Viewer</Label>
+
+						<Label Margin="-3,0,0,0" FontWeight="Bold">Media Viewer</Label>
+						<TextBlock  TextWrapping="Wrap"  VerticalAlignment="Center">Open audio and video files in the internal previewer with LibVLC</TextBlock>
+						<ToggleSwitch IsChecked="{Binding PreviewerLiVlcEnabled}" Margin="0,0,0,0"/>
+						<TextBlock  TextWrapping="Wrap"  VerticalAlignment="Center">Note: Initialising LibVLC can cause the program to stop responding for a moment when opening VPs for the first time in the session.</TextBlock>
+
+						<Label Margin="-3,5,0,0" FontWeight="Bold">Text Viewer</Label>
 						<TextBlock  TextWrapping="Wrap"  VerticalAlignment="Center">Open text based files (.tbm, .tbl, .lua, etc) with the internal text viewer</TextBlock>
 						<ToggleSwitch IsChecked="{Binding PreviewerTextViewer}" Margin="0,0,0,0"/>
 
@@ -72,10 +77,10 @@
 			</TabItem>
 			
 			<TabItem Header="General" FontWeight="Bold">
-				<StackPanel>
-					<Separator Margin="0,50,0,10"/>
-					<Button Command="{Binding Reset}" HorizontalAlignment="Center">Reset Settings</Button>
-				</StackPanel>
+				<WrapPanel>
+					<Button Margin="10" Command="{Binding OpenLog}" HorizontalAlignment="Center">Open log file</Button>
+					<Button Margin="10" Command="{Binding Reset}" HorizontalAlignment="Center">Reset Settings</Button>
+				</WrapPanel>
 			</TabItem>
 			
 		</TabControl>

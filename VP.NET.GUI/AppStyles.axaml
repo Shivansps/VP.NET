@@ -1,0 +1,38 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Design.PreviewWith>
+    <Border Padding="20">
+		<StackPanel>
+		<Label>Buttons</Label>
+		<Button Margin="2" Width="150">Generic Button</Button>
+		</StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+	<Style Selector="Button">
+		<Setter Property="FontWeight" Value="Bold"/>
+		<Setter Property="Background" Value="#343739"/>
+		<Setter Property="Foreground" Value="#e5e5e5"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="BorderBrush" Value="#777777"/>
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+	</Style>
+	<Style Selector="Button:pointerover /template/ ContentPresenter">
+		<Setter Property="Background" Value="#131414"/>
+		<Setter Property="BorderBrush" Value="#d7d7d7"/>
+		<Setter Property="Foreground" Value="#e5e5e5"/>
+		<Setter Property="Cursor" Value="Hand"/>
+	</Style>
+	<!--Generic Disabled-->
+	<Style Selector="Button:disabled /template/ ContentPresenter">
+		<Setter Property="FontWeight" Value="Bold"/>
+		<Setter Property="Background" Value="DarkGray"/>
+		<Setter Property="Foreground" Value="Gray"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="Cursor" Value="No"/>
+	</Style>
+
+</Styles>
