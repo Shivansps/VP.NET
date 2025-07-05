@@ -17,18 +17,12 @@ namespace VP.NET.GUI.Models
         {
             public AniHeader header;                    // Ani header
             public List<AniFrame> frames = new();       // Frames in raw format
-            public List<Bitmap> bitmapFrames = new();   // Frames converted to usable bitmaps
             public List<AniKey> keys = new();           // Key Frames
             public int endCount;                        // Not sure what this is
 
             public void Dispose()
             {
                 frames.Clear();
-                foreach (Bitmap frame in bitmapFrames)
-                {
-                    frame.Dispose();
-                }
-                bitmapFrames.Clear();
                 keys.Clear();
             }
         }
@@ -55,162 +49,8 @@ namespace VP.NET.GUI.Models
         public class AniFrame
         {
             public byte[]? buffer;
-        }
 
-        public static AniFile? ReadANI(Stream stream)
-        {
-            var parser = new AniParser();
-            try
-            {
-                AniFile ani = parser.LoadAni(stream);
-
-                foreach (var frame in ani.frames)
-                    ani.bitmapFrames.Add(parser.ConvertToBitmap(frame, ani.header));
-
-                return ani;
-            }
-            catch (Exception ex)
-            {
-                Log.Add(Log.LogSeverity.Error, "ANIHelper.ReadANI", ex);
-            }
-            return null;
-        }
-
-        private class AniParser
-        {
-            public AniFile LoadAni(Stream stream)
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-                using var br = new BinaryReader(stream, new UTF8Encoding(), true);
-
-                AniFile ani = new();
-                ani.header = ReadHeader(br);
-
-                if (ani.header.shouldBeZero != 0 || ani.header.version < 2 || ani.header.numFrames <= 0)
-                    throw new Exception("Invalid Ani file");
-
-                // Read keyframes
-                for (int i = 0; i < ani.header.numKeys; i++)
-                {
-                    ani.keys.Add(new AniKey
-                    {
-                        twoByte = br.ReadInt16(),
-                        startCount = br.ReadInt16()
-                    });
-                }
-
-                // no idea what is this
-                ani.endCount = br.ReadInt32();
-
-                // Decode all frames
-                DecodeFrames(br, ani);
-
-                return ani;
-            }
-
-            private AniHeader ReadHeader(BinaryReader br)
-            {
-                var header = new AniHeader
-                {
-                    shouldBeZero = br.ReadInt16(),
-                    version = br.ReadInt16(),
-                    fps = br.ReadInt16(),
-                    r = br.ReadByte(),
-                    g = br.ReadByte(),
-                    b = br.ReadByte(),
-                    width = br.ReadInt16(),
-                    height = br.ReadInt16(),
-                    numFrames = br.ReadInt16(),
-                    packerCode = br.ReadByte()
-                };
-
-                header.palette = br.ReadBytes(256 * 3); // 768 bytes
-                header.numKeys = br.ReadInt16();
-
-                return header;
-            }
-
-            private void DecodeFrames(BinaryReader br, AniFile ani)
-            {
-                int width = ani.header.width;
-                int height = ani.header.height;
-
-                // Pad to 4-byte alignment
-                int paddedWidth = width;
-                if (paddedWidth % 4 != 0)
-                    paddedWidth += (4 - (paddedWidth % 4));
-
-                int frameSize = paddedWidth * height;
-
-                byte[] curFrame = new byte[frameSize];
-                byte[] lastFrame = new byte[frameSize];
-
-                // Fill lastFrame with RGB color assuming grayscale/8-bit index
-                byte fill = ani.header.r;
-                Array.Fill(lastFrame, fill);
-
-                for (int frameIndex = 0; frameIndex < ani.header.numFrames; frameIndex++)
-                {
-                    br.ReadByte(); // framebyte, unused
-
-                    int runcount = 0;
-                    byte runvalue = 0;
-                    int pos = 0;
-
-                    byte[] p = curFrame;
-                    byte[] p2 = frameIndex > 0 ? lastFrame : curFrame;
-
-                    for (int y = 0; y < height; y++)
-                    {
-                        for (int x = 0; x < width; x++)
-                        {
-                            if (runcount > 0)
-                            {
-                                runcount--;
-                            }
-                            else
-                            {
-                                runvalue = br.ReadByte();
-                                if (runvalue == ani.header.packerCode)
-                                {
-                                    runcount = br.ReadByte();
-                                    if (runcount < 2)
-                                    {
-                                        runvalue = ani.header.packerCode;
-                                    }
-                                    else
-                                    {
-                                        runvalue = br.ReadByte();
-                                    }
-                                }
-                            }
-
-                            byte pixel = runvalue;
-
-                            if (runvalue == 254)
-                            {
-                                // Transparent, use last frame pixel
-                                pixel = p2[pos];
-                            }
-
-                            p[pos++] = pixel;
-                        }
-
-                        // Apply padding
-                        pos += paddedWidth - width;
-                    }
-
-                    // Store frame
-                    var frameCopy = new byte[frameSize];
-                    Buffer.BlockCopy(curFrame, 0, frameCopy, 0, frameSize);
-                    ani.frames.Add(new AniFrame { buffer = frameCopy });
-
-                    // Copy curFrame to lastFrame
-                    Buffer.BlockCopy(curFrame, 0, lastFrame, 0, frameSize);
-                }
-            }
-
-            public Bitmap ConvertToBitmap(AniFrame frame, AniHeader header)
+            public Bitmap ToBitmap(ref AniHeader header)
             {
                 // Create a bitmap of the correct size
                 var bitmap = new WriteableBitmap(new PixelSize(header.width, header.height), new Vector(96, 96), Avalonia.Platform.PixelFormat.Rgb32);
@@ -233,7 +73,7 @@ namespace VP.NET.GUI.Models
                 {
                     for (int x = 0; x < header.width; x++)
                     {
-                        byte pixel = frame.buffer![pixelIndex++];
+                        byte pixel = buffer![pixelIndex++];
                         int colorIndex = pixel;
 
                         // Check for transparency
@@ -264,6 +104,146 @@ namespace VP.NET.GUI.Models
                 }
 
                 return bitmap;
+            }
+        }
+
+        public static AniFile? ReadANI(Stream stream)
+        {
+            try
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+                using var br = new BinaryReader(stream, new UTF8Encoding(), true);
+
+                AniFile ani = new();
+                ani.header = ReadHeader(br);
+
+                if (ani.header.shouldBeZero != 0 || ani.header.version < 2 || ani.header.numFrames <= 0)
+                    throw new Exception("Invalid Ani file");
+
+                // Read keyframes
+                for (int i = 0; i < ani.header.numKeys; i++)
+                {
+                    ani.keys.Add(new AniKey
+                    {
+                        twoByte = br.ReadInt16(),
+                        startCount = br.ReadInt16()
+                    });
+                }
+
+                // no idea what is this
+                ani.endCount = br.ReadInt32();
+
+                // Decode all frames
+                DecodeFrames(br, ani);
+
+                return ani;
+            }
+            catch (Exception ex)
+            {
+                Log.Add(Log.LogSeverity.Error, "ANIHelper.ReadANI", ex);
+            }
+            return null;
+        }
+
+        private static AniHeader ReadHeader(BinaryReader br)
+        {
+            var header = new AniHeader
+            {
+                shouldBeZero = br.ReadInt16(),
+                version = br.ReadInt16(),
+                fps = br.ReadInt16(),
+                r = br.ReadByte(),
+                g = br.ReadByte(),
+                b = br.ReadByte(),
+                width = br.ReadInt16(),
+                height = br.ReadInt16(),
+                numFrames = br.ReadInt16(),
+                packerCode = br.ReadByte()
+            };
+
+            header.palette = br.ReadBytes(256 * 3); // 768 bytes
+            header.numKeys = br.ReadInt16();
+
+            return header;
+        }
+
+        private static void DecodeFrames(BinaryReader br, AniFile ani)
+        {
+            int width = ani.header.width;
+            int height = ani.header.height;
+
+            // Pad to 4-byte alignment
+            int paddedWidth = width;
+            if (paddedWidth % 4 != 0)
+                paddedWidth += (4 - (paddedWidth % 4));
+
+            int frameSize = paddedWidth * height;
+
+            byte[] curFrame = new byte[frameSize];
+            byte[] lastFrame = new byte[frameSize];
+
+            // Fill lastFrame with RGB color assuming grayscale/8-bit index
+            byte fill = ani.header.r;
+            Array.Fill(lastFrame, fill);
+
+            for (int frameIndex = 0; frameIndex < ani.header.numFrames; frameIndex++)
+            {
+                br.ReadByte(); // framebyte, unused
+
+                int runcount = 0;
+                byte runvalue = 0;
+                int pos = 0;
+
+                byte[] p = curFrame;
+                byte[] p2 = frameIndex > 0 ? lastFrame : curFrame;
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        if (runcount > 0)
+                        {
+                            runcount--;
+                        }
+                        else
+                        {
+                            runvalue = br.ReadByte();
+                            if (runvalue == ani.header.packerCode)
+                            {
+                                runcount = br.ReadByte();
+                                if (runcount < 2)
+                                {
+                                    runvalue = ani.header.packerCode;
+                                }
+                                else
+                                {
+                                    runvalue = br.ReadByte();
+                                }
+                            }
+                        }
+
+                        byte pixel = runvalue;
+
+                        if (runvalue == 254)
+                        {
+                            // Transparent, use last frame pixel
+                            pixel = p2[pos];
+                        }
+
+                        p[pos++] = pixel;
+                    }
+
+                    // Apply padding
+                    pos += paddedWidth - width;
+                }
+
+                // Store frame
+                var frameCopy = new byte[frameSize];
+                Buffer.BlockCopy(curFrame, 0, frameCopy, 0, frameSize);
+                ani.frames.Add(new AniFrame { buffer = frameCopy });
+
+                // Copy curFrame to lastFrame
+                Buffer.BlockCopy(curFrame, 0, lastFrame, 0, frameSize);
             }
         }
     }

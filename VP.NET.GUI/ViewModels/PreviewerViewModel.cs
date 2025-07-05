@@ -279,7 +279,7 @@ namespace VP.NET.GUI.ViewModels
                         {
                             if (localCts?.IsCancellationRequested == true)
                                 break;
-                            ImageSource = ani.bitmapFrames[f];
+                            ImageSource = ani.frames[f].ToBitmap(ref ani.header);
                             await Task.Delay(1000 / ani.header.fps);
                             f++;
                             if (f >= ani.header.numFrames)
