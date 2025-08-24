@@ -1,19 +1,22 @@
-﻿using System;
+﻿using Avalonia.Media.Imaging;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 namespace VP.NET.GUI.Models
 {
     /// <summary>
-    /// Lazy APNG Helper to check if png file is a apng
+    /// Helper class to read APNG files.
     /// </summary>
-    public class APNGHelper
+    public static class APNGHelper
     {
-        private static byte[] FrameSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        // PNG signature
+        private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
         /// <summary>
         ///  Reads a stream to verify if it is a valid APNG file
-        ///  Checks for acTL chuck presence on the first 5000 bytes of data. No other data loading is done.
+        ///  Checks for acTL chuck presence.
         ///  Dosent close or disposes the stream.
         ///  Throws a exception if the stream dosent contains a png file data
         /// </summary>
@@ -22,42 +25,62 @@ namespace VP.NET.GUI.Models
         /// <exception cref="Exception"></exception>
         public static bool IsApng(Stream pngStream)
         {
-            if (!IsBytesEqual(ReadBytes(pngStream,FrameSignature.Length), FrameSignature))
-                throw new Exception("File signature incorrect.");
+            if (pngStream == null || !pngStream.CanRead)
+                throw new ArgumentException("Stream inválido.");
 
-            var bufferLength = pngStream.Length < 5000 ? (int)pngStream.Length : 5000;
+            long originalPos = pngStream.Position;
 
-            var s = Encoding.ASCII.GetString(ReadBytes(pngStream, bufferLength));
-            if(s.Contains("acTL"))
+            try
             {
-                pngStream.Seek(0, SeekOrigin.Begin);
-                return true;
+                using (var br = new BinaryReader(pngStream, Encoding.ASCII, leaveOpen: true))
+                {
+                    var sig = br.ReadBytes(8);
+                    if (!BytesEqual(sig, PngSignature))
+                        throw new Exception("Incorrect PNG Signature");
+
+                    // Look for acTL o IEND
+                    while (pngStream.Position < pngStream.Length)
+                    {
+                        var lengthBytes = br.ReadBytes(4);
+                        if (lengthBytes.Length < 4) break;
+                        int length = ReadBigEndianInt(lengthBytes);
+
+                        var chunkType = Encoding.ASCII.GetString(br.ReadBytes(4));
+
+                        if (chunkType == "acTL")
+                        {
+                            return true;
+                        }
+
+                        pngStream.Seek(length + 4, SeekOrigin.Current);
+
+                        if (chunkType == "IEND")
+                            break; 
+                    }
+                }
+                return false;
             }
-            pngStream.Seek(0, SeekOrigin.Begin);
-            return false;
+            finally
+            {
+                pngStream.Seek(originalPos, SeekOrigin.Begin);
+            }
         }
 
-        private static bool IsBytesEqual(byte[] byte1, byte[] byte2)
-        {
-            if (byte1.Length != byte2.Length)
-                return false;
 
-            for (int i = 0; i < byte1.Length; i++)
-            {
-                if (byte1[i] != byte2[i])
-                    return false;
-            }
+        // Helpers
+
+        private static bool BytesEqual(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (a[i] != b[i]) return false;
             return true;
         }
 
-        private static byte[] ReadBytes(Stream ms, int count)
+        private static int ReadBigEndianInt(byte[] bytes)
         {
-            var buffer = new byte[count];
-
-            if (ms.Read(buffer, 0, count) != count)
-                throw new Exception("End reached.");
-
-            return buffer;
+            if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+            return BitConverter.ToInt32(bytes, 0);
         }
     }
 }
