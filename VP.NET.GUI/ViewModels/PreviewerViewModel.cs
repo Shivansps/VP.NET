@@ -1,20 +1,19 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
+﻿using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ImageMagick;
-using System.IO;
-using Avalonia.Media.Imaging;
-using VP.NET.GUI.Models;
 using LibVLCSharp.Shared;
-using AnimatedImage.Avalonia;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using VP.NET.GUI.Views;
-using static System.Net.Mime.MediaTypeNames;
-using SkiaSharp;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Threading;
+using VP.NET.GUI.Models;
+using VP.NET.GUI.Views;
 
 namespace VP.NET.GUI.ViewModels
 {
@@ -22,9 +21,6 @@ namespace VP.NET.GUI.ViewModels
     {
         [ObservableProperty]
         internal string filename = "";
-
-        [ObservableProperty]
-        internal AnimatedImageSourceStream? animation = null;
 
         [ObservableProperty]
         internal bool barVisible = false;
@@ -43,9 +39,6 @@ namespace VP.NET.GUI.ViewModels
 
         [ObservableProperty]
         internal Bitmap? imageSource = null;
-
-        [ObservableProperty]
-        internal bool playingAnim = false;
 
         private LibVLC? _libVlc = null;
         private MediaPlayer? _mediaPlayerVlc = null;
@@ -117,17 +110,24 @@ namespace VP.NET.GUI.ViewModels
             BarVisible = false;
             Error = "";
             extension = "";
+            var old = ImageSource;
             ImageSource = null;
             if (_libVlc != null && _mediaPlayerVlc != null)
                 StopVLC();
             _previewStream?.Dispose();
             _previewStream = null;
-            Animation = null;
             MediaButtonsVisible = false;
             Filename = "";
             MediaPaused = false;
             _vpPath = "";
             item = null;
+            if (old != null)
+            {
+                Dispatcher.UIThread.Post(async () => {
+                    await Task.Delay(10);
+                    old.Dispose();
+                });
+            }
         }
 
         public async void StartPreview(VpFileEntryViewModel item, string vpPath)
@@ -154,21 +154,20 @@ namespace VP.NET.GUI.ViewModels
                     case "pcx":
                     case "dds":
                     case "tga":
-                        await item.vpFile.ReadToStream(_previewStream);
+                        await item.vpFile!.ReadToStream(_previewStream);
                         ImageLoader(item.extension);
                         break;
                     /* Animations, maybe */
                     case "png":
-                        await item.vpFile.ReadToStream(_previewStream);
+                        await item.vpFile!.ReadToStream(_previewStream);
                         if (APNGHelper.IsApng(_previewStream!))
                             AnimationLoader(item.extension);
                         else
                             ImageLoader(item.extension);  
                         break;
-                    case "gif":
                     case "apng":
                     case "ani":
-                        await item.vpFile.ReadToStream(_previewStream);
+                        await item.vpFile!.ReadToStream(_previewStream);
                         AnimationLoader(item.extension);
                         break;
                     /* VLC */
@@ -180,7 +179,7 @@ namespace VP.NET.GUI.ViewModels
                     case "aac":
                         if (MainWindowViewModel.settings.PreviewerLibVlcViewer && _libVlc != null && _mediaPlayerVlc != null)
                         {
-                            await item.vpFile.ReadToStream(_previewStream);
+                            await item.vpFile!.ReadToStream(_previewStream);
                             VLCPlayback(extension);
                         }
                         else 
@@ -196,7 +195,7 @@ namespace VP.NET.GUI.ViewModels
                     case "eff":
                     case "fs2":
                     case "fc2":
-                        await item.vpFile.ReadToStream(_previewStream);
+                        await item.vpFile!.ReadToStream(_previewStream);
                         TextLoader();
                         break;
                     /* Default */
@@ -254,7 +253,6 @@ namespace VP.NET.GUI.ViewModels
                     image.Write(st2);
                     st2.Position = 0;
                     ImageSource = new Bitmap(st2);
-                    PlayingAnim = false;
                 }
             }
         }
@@ -262,12 +260,29 @@ namespace VP.NET.GUI.ViewModels
         private void AnimationLoader(string ext)
         {
             InfoFile = ext == "png" ? "APNG" : ext.ToUpper();
-            if (ext == "png" || ext == "gif")
+            if (ext == "png")
             {
-                Animation = new AnimatedImageSourceStream(_previewStream!);
-                PlayingAnim = true;
+                var apng = APNGHelper.ReadApng(_previewStream!);
+                if (apng != null && apng.Frames.Count > 0)
+                {
+                    var composer = apng.CreateComposer();
+                    var localCts = _cts;
+                    Task.Factory.StartNew(async () =>
+                    {
+                        do
+                        {
+                            if (localCts?.IsCancellationRequested == true) break;
+                            var bmp = composer.NextFrame(out int delayMs);
+                            var old = ImageSource;
+                            ImageSource = bmp;
+                            await Task.Delay(delayMs);
+                            old?.Dispose();
+                        } while (true);
+                        composer.Dispose();
+                    });
+                }
             }
-            if(ext == "ani")
+            else if (ext == "ani")
             {
                 var ani = ANIHelper.ReadANI(_previewStream!);
                 if (ani != null)
@@ -279,8 +294,10 @@ namespace VP.NET.GUI.ViewModels
                         {
                             if (localCts?.IsCancellationRequested == true)
                                 break;
+                            var old = ImageSource;
                             ImageSource = ani.frames[f].ToBitmap(ref ani.header);
                             await Task.Delay(1000 / ani.header.fps);
+                            old?.Dispose();
                             f++;
                             if (f >= ani.header.numFrames)
                                 f = 0;
