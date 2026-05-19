@@ -6,6 +6,7 @@
              x:Class="VP.NET.GUI.Views.PreviewerView"
 			 xmlns:vm="using:VP.NET.GUI.ViewModels"
 			 xmlns:v="using:VP.NET.GUI.Views"
+			 xmlns:c="using:VP.NET.GUI.Controls"
 			 Background="White">
 	
 	<Design.DataContext>
@@ -40,7 +41,8 @@
 
 		<Slider IsVisible="{Binding MediaButtonsVisible}" Value="{Binding MediaVolume}" Minimum="0" Maximum="100" ValueChanged="Slider_ValueChanged" Margin="5,80,5,5"></Slider>
 		
-		<Image ZIndex="0" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" Source="{Binding ImageSource}"></Image>
+		<c:AnimatedImage ZIndex="0" VerticalAlignment="Center" HorizontalAlignment="Center" Stretch="Uniform" Extension="{Binding ImageExt}" Stream="{Binding ImageStream}" Frames="{Binding EffFrameList}" DefaultFrameDelay="{Binding EffFrameDelay}"/>
+
 		<TextBlock Margin="0,0,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  Text="{Binding Error}" Foreground="Red" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
 		<TextBlock IsVisible="{Binding MediaButtonsVisible}" Margin="0,30,0,0" Text="{Binding Filename}" Foreground="Black" FontWeight="Bold" TextWrapping="Wrap"></TextBlock>
 	</Grid>

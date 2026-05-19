@@ -1,17 +1,16 @@
 ﻿using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ImageMagick;
 using LibVLCSharp.Shared;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using VP.NET.GUI.Models;
 using VP.NET.GUI.Views;
 
@@ -38,7 +37,16 @@ namespace VP.NET.GUI.ViewModels
         internal string error = "";
 
         [ObservableProperty]
-        internal Bitmap? imageSource = null;
+        internal List<Bitmap>? effFrameList = null;
+
+        [ObservableProperty]
+        internal int effFrameDelay = 100;
+
+        [ObservableProperty]
+        internal Stream? imageStream = null;
+
+        [ObservableProperty]
+        internal string? imageExt = null;
 
         private LibVLC? _libVlc = null;
         private MediaPlayer? _mediaPlayerVlc = null;
@@ -48,6 +56,7 @@ namespace VP.NET.GUI.ViewModels
         private VpFileEntryViewModel? item = null;
         private TextViewModel? textVM = null;
         private TextView? textDialog = null;
+        private bool _vlcInitialized = false;
 
         private CancellationTokenSource? _cts = null;
 
@@ -60,23 +69,28 @@ namespace VP.NET.GUI.ViewModels
             {
                 if (MainWindowViewModel.settings.PreviewerLibVlcViewer)
                 {
-                    _libVlc = new LibVLC();
-                    _mediaPlayerVlc = new MediaPlayer(_libVlc);
-                    _mediaPlayerVlc.Volume = 100;
+                    Task.Factory.StartNew(() => { 
+                        _libVlc = new LibVLC();
+                        _mediaPlayerVlc = new MediaPlayer(_libVlc);
+                        _mediaPlayerVlc.Volume = 100;
+                        _vlcInitialized = true;
+                    });
                 }
                 else
                 {
                     Error = "LibVLC is disabled in settings.";
                 }
+
             }
             catch (Exception ex)
             {
                 Error = "LibVLC is not avalible";
                 if(Utils.IsLinux)
                 {
-                    Error += ". On linux you need to install the \"vlc\" and \"libvlc-dev\" packages.";
+                    Error += ". On you need to install the \"vlc\" and \"libvlc-dev\" packages.";
                 }
                 Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.Constructor", ex);
+                _vlcInitialized = true;
             }
         }
 
@@ -86,9 +100,12 @@ namespace VP.NET.GUI.ViewModels
             {
                 if (_libVlc == null && _mediaPlayerVlc == null)
                 {
-                    _libVlc = new LibVLC();
-                    _mediaPlayerVlc = new MediaPlayer(_libVlc);
-                    _mediaPlayerVlc.Volume = 100;
+                    Task.Factory.StartNew(() => {
+                        _libVlc = new LibVLC();
+                        _mediaPlayerVlc = new MediaPlayer(_libVlc);
+                        _mediaPlayerVlc.Volume = 100;
+                        _vlcInitialized = true;
+                    });
                 }
             }
             catch (Exception ex)
@@ -96,38 +113,46 @@ namespace VP.NET.GUI.ViewModels
                 Error = "LibVLC is not avalible";
                 if (Utils.IsLinux)
                 {
-                    Error += ". On linux you need to install the \"vlc\" and \"libvlc-dev\" packages.";
+                    Error += ". On you need to install the \"vlc\" and \"libvlc-dev\" packages.";
                 }
                 Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.EnableVLCLate", ex);
+                _vlcInitialized = true;
             }
         }
 
 
         public void Reset()
         {
-            _cts?.Cancel();
-            InfoFile = "";
-            BarVisible = false;
-            Error = "";
-            extension = "";
-            var old = ImageSource;
-            ImageSource = null;
-            if (_libVlc != null && _mediaPlayerVlc != null)
-                StopVLC();
-            _previewStream?.Dispose();
-            _previewStream = null;
-            MediaButtonsVisible = false;
-            Filename = "";
-            MediaPaused = false;
-            _vpPath = "";
-            item = null;
-            if (old != null)
+            try
             {
-                Dispatcher.UIThread.Post(async () => {
-                    await Task.Delay(10);
-                    old.Dispose();
-                });
+                _cts?.Cancel();
+                InfoFile = "";
+                BarVisible = false;
+                Error = "";
+                extension = "";
+                if (_libVlc != null && _mediaPlayerVlc != null && ImageStream == null)
+                    StopVLC();
+                MediaButtonsVisible = false;
+                Filename = "";
+                MediaPaused = false;
+                _vpPath = "";
+                item = null;
+                if(EffFrameList != null && EffFrameList.Count > 0)
+                {
+                    var oldEffL = EffFrameList;
+                    EffFrameList = null;
+                    EffFrameDelay = 100;
+                    foreach(var b in oldEffL)
+                        b?.Dispose();
+                }
+                var old = ImageStream;
+                _previewStream?.Dispose();
+                _previewStream = null;
+                ImageStream = null;
+                old?.Dispose();
+                GC.Collect();
             }
+            catch { }
         }
 
         public async void StartPreview(VpFileEntryViewModel item, string vpPath)
@@ -154,19 +179,16 @@ namespace VP.NET.GUI.ViewModels
                     case "pcx":
                     case "dds":
                     case "tga":
+                        if (!_previewStream.CanRead) return;
                         await item.vpFile!.ReadToStream(_previewStream);
                         ImageLoader(item.extension);
                         break;
                     /* Animations, maybe */
                     case "png":
-                        await item.vpFile!.ReadToStream(_previewStream);
-                        if (APNGHelper.IsApng(_previewStream!))
-                            AnimationLoader(item.extension);
-                        else
-                            ImageLoader(item.extension);  
-                        break;
                     case "apng":
                     case "ani":
+                    case "eff":
+                        if (!_previewStream.CanRead) return;
                         await item.vpFile!.ReadToStream(_previewStream);
                         AnimationLoader(item.extension);
                         break;
@@ -179,12 +201,16 @@ namespace VP.NET.GUI.ViewModels
                     case "aac":
                         if (MainWindowViewModel.settings.PreviewerLibVlcViewer && _libVlc != null && _mediaPlayerVlc != null)
                         {
+                            if (!_previewStream.CanRead) return;
                             await item.vpFile!.ReadToStream(_previewStream);
                             VLCPlayback(extension);
                         }
                         else 
                         {
-                            Error = "LibVLC is needed for this format";
+                            if(_vlcInitialized)
+                                Error = "LibVLC is needed for this format";
+                            else
+                                Error = "LibVLC is still initializing";
                         }
                         break;
 
@@ -192,9 +218,9 @@ namespace VP.NET.GUI.ViewModels
                     case "lua":
                     case "tbl":
                     case "tbm":
-                    case "eff":
                     case "fs2":
                     case "fc2":
+                        if (!_previewStream.CanRead) return;
                         await item.vpFile!.ReadToStream(_previewStream);
                         TextLoader();
                         break;
@@ -203,6 +229,10 @@ namespace VP.NET.GUI.ViewModels
                         Error = "Unsupported format";
                         break;
                 }
+            }
+            catch(OperationCanceledException)
+            {
+                //silent
             }
             catch (Exception ex)
             {
@@ -224,7 +254,7 @@ namespace VP.NET.GUI.ViewModels
                 textDialog = new TextView();
                 textDialog.DataContext = textVM;
             }
-            using (var reader = new StreamReader(_previewStream, Encoding.ASCII))
+            using (var reader = new StreamReader(_previewStream, Encoding.ASCII, leaveOpen: true))
             {
                 _previewStream.Position = 0;
                 textVM.Text = reader.ReadToEnd();
@@ -243,71 +273,172 @@ namespace VP.NET.GUI.ViewModels
        
         private void ImageLoader(string ext)
         {
+            if(_previewStream == null || !_previewStream.CanRead)
+                return;
+            if (_cts != null && _cts.IsCancellationRequested)
+                return;
             using (var image = new MagickImage(_previewStream!))
             {
                 image.Format = MagickFormat.Png;
                 if(ext == "dds")
                     InfoFile = image.Compression.ToString();
-                using (var st2 = new MemoryStream())
-                {
-                    image.Write(st2);
-                    st2.Position = 0;
-                    ImageSource = new Bitmap(st2);
-                }
+                var st2 = new MemoryStream();
+                image.Write(st2);
+                st2.Position = 0;
+                ImageExt = ext;
+                ImageStream = st2;
             }
         }
 
-        private void AnimationLoader(string ext)
+        private async void AnimationLoader(string ext)
         {
+            if (_previewStream == null || !_previewStream.CanRead)
+                return;
+            if (_cts != null && _cts.IsCancellationRequested)
+                return;
             InfoFile = ext == "png" ? "APNG" : ext.ToUpper();
-            if (ext == "png")
+            if (ext == "png" || ext == "ani")
             {
-                var apng = APNGHelper.ReadApng(_previewStream!);
-                if (apng != null && apng.Frames.Count > 0)
+                ImageExt = ext;
+                ImageStream = _previewStream;
+            }
+            else if (ext == "eff")
+            {
+                TextLoader();
+                var loadedVps = MainWindowViewModel.Instance?.WorkingFiles;
+                if (loadedVps == null || !loadedVps.Any())
                 {
-                    var composer = apng.CreateComposer();
-                    var localCts = _cts;
-                    Task.Factory.StartNew(async () =>
+                    Error = "No loaded VPs";
+                    return;
+                }
+
+                if (_cts != null && _cts.IsCancellationRequested)
+                    return;
+
+                var effname = item?.vpFile?.info.name;
+                if (string.IsNullOrEmpty(effname)) return;
+
+                EFFHelper effFile;
+                try
+                {
+                    _previewStream!.Position = 0;
+                    effFile = EFFHelper.Parse(_previewStream!, effname.ToLower());
+                }
+                catch (Exception ex)
+                {
+                    Error = ex.Message;
+                    return;
+                }
+
+                if (effFile?.FrameFiles == null || effFile.Type == null)
+                {
+                    Error = "Error parsing the eff file";
+                    return;
+                }
+
+                if (_cts != null && _cts.IsCancellationRequested)
+                    return;
+
+                var token = _cts?.Token ?? CancellationToken.None;
+                var frameCount = effFile.FrameCount;
+                var isDds = effFile.Type.Equals("dds", StringComparison.OrdinalIgnoreCase);
+                Bitmap[]? frames = null;
+
+                try
+                {
+                    // Find each frame in open VPs
+                    var frameSources = new VPFile[frameCount];
+                    for (int i = 0; i < frameCount; i++)
                     {
-                        do
+                        token.ThrowIfCancellationRequested();
+                        var name = effFile.FrameFiles![i];
+                        foreach (var vp in loadedVps)
                         {
-                            if (localCts?.IsCancellationRequested == true) break;
-                            var bmp = composer.NextFrame(out int delayMs);
-                            var old = ImageSource;
-                            ImageSource = bmp;
-                            await Task.Delay(delayMs);
-                            old?.Dispose();
-                        } while (true);
-                        composer.Dispose();
-                    });
+                            if (vp.Files == null) continue;
+                            foreach (var file in vp.Files)
+                            {
+                                if (file.VpFile == null) continue;
+                                var found = file.VpFile.SearchForFileName(name);
+                                if (found != null) { frameSources[i] = found; break; }
+                            }
+                            if (frameSources[i] != null) break;
+                        }
+                        if (frameSources[i] == null)
+                        {
+                            Error = $"Frame missing: {name}";
+                            return;
+                        }
+                    }
+
+                    // Read Frame bytes for each frame
+                    var frameBytes = new byte[frameCount][];
+                    for (int i = 0; i < frameCount; i++)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        using var ms = new MemoryStream();
+                        await frameSources[i]!.ReadToStream(ms);
+                        frameBytes[i] = ms.ToArray();
+                    }
+
+                    // Convert DDS->PNG->Bitmap
+                    frames = new Bitmap[frameCount];
+                    await Task.Run(() =>
+                    {
+                        try
+                        {
+                            Parallel.For(0, frameCount, new ParallelOptions
+                            {
+                                MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1),
+                                CancellationToken = token
+                            },
+                            i =>
+                            {
+                                if (isDds)
+                                {
+                                    using var src = new MemoryStream(frameBytes[i]);
+                                    using var image = new MagickImage(src);
+                                    image.Format = MagickFormat.Png;
+                                    using var dst = new MemoryStream();
+                                    image.Write(dst);
+                                    dst.Position = 0;
+                                    frames[i] = new Bitmap(dst);
+                                }
+                                else
+                                {
+                                    using var src = new MemoryStream(frameBytes[i]);
+                                    frames[i] = new Bitmap(src);
+                                }
+                                frameBytes[i] = null!; // liberar bytes ya consumidos
+                            });
+                        }
+                        catch {}
+
+                    }, token);
+
+                    if (token.IsCancellationRequested)
+                    {
+                        throw new OperationCanceledException();
+                    }
+                    // Assign final frames
+                    EffFrameDelay = (int)effFile.FrameDurationMs;
+                    EffFrameList = frames.ToList();
+                }
+                catch (OperationCanceledException)
+                {
+                    if (frames != null)
+                        foreach (var b in frames) b?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    if (frames != null)
+                        foreach (var b in frames) b?.Dispose();
+                    Error = "Error loading eff frames";
+                    Log.Add(Log.LogSeverity.Error, "PreviewerViewModel.AnimationLoader.eff", ex);
                 }
             }
-            else if (ext == "ani")
+            else
             {
-                var ani = ANIHelper.ReadANI(_previewStream!);
-                if (ani != null)
-                {
-                    int f = 0;
-                    var localCts = _cts;
-                    Task.Factory.StartNew(async () => {
-                        do
-                        {
-                            if (localCts?.IsCancellationRequested == true)
-                                break;
-                            var old = ImageSource;
-                            ImageSource = ani.frames[f].ToBitmap(ref ani.header);
-                            await Task.Delay(1000 / ani.header.fps);
-                            old?.Dispose();
-                            f++;
-                            if (f >= ani.header.numFrames)
-                                f = 0;
-                        } while (true);
-
-                        ani.Dispose();
-                    });
-                }
-                else
-                    Error = "An error has ocurred while parsing the file";
+                Error = "Animation file not supported.";
             }
         }
 

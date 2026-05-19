@@ -80,6 +80,32 @@ namespace VP.NET
         }
 
         /// <summary>
+        /// Search for a single file name, recursively.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns>VPFile or null</returns>
+        public VPFile? SearchForFileName(string filename)
+        {
+            if (type == VPFileType.File)
+            {
+                if (info.name.ToLower() == filename.ToLower())
+                {
+                    return this;
+                }
+            } else if (type == VPFileType.Directory && files != null)
+            {
+                foreach(var f in files)
+                {
+                    var found = f.SearchForFileName(filename);
+                    if (found != null) 
+                        return found;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Adds a file into this directory
         /// </summary>
         /// <param name="file"></param>
@@ -256,7 +282,7 @@ namespace VP.NET
                 throw new Exception("Unable to open vp file in path : " + vp?.vpFilePath);
             }
 
-            var source = new FileStream(vp.vpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize);
+            using var source = new FileStream(vp.vpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize);
 
             if (!source.CanRead)
             {
@@ -280,13 +306,11 @@ namespace VP.NET
                 {
                     byte[] buffer = new byte[bufferSize];
                     int bytesToRead = leftToCopy > bufferSize ? bufferSize : leftToCopy;
+                    if (!source.CanRead || !destination.CanWrite) throw new OperationCanceledException();
                     leftToCopy -= await source.ReadAsync(buffer, 0, bytesToRead);
                     await destination.WriteAsync(buffer, 0, bytesToRead);
                 }
             }
-
-            source.Close();
-            await source.DisposeAsync();
             destination.Position = 0;
         }
 

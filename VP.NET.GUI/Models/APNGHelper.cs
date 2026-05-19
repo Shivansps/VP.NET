@@ -117,6 +117,12 @@ namespace VP.NET.GUI.Models
             /// <summary>Current frame index (0-based).</summary>
             public int FrameIndex => _frameIndex;
 
+            /// <summary>Canvas width.</summary>
+            public int CanvasWidth  => _apng.CanvasWidth;
+
+            /// <summary>Canvas height.</summary>
+            public int CanvasHeight => _apng.CanvasHeight;
+
             /// <summary>
             /// Composes and returns the next animation frame as a WriteableBitmap.
             /// Automatically wraps around to frame 0 after the last frame.
@@ -143,7 +149,70 @@ namespace VP.NET.GUI.Models
                 // Wrap canvas pixels into a WriteableBitmap for display
                 var bmp = CanvasToWriteableBitmap(_canvas, _apng.CanvasWidth, _apng.CanvasHeight);
 
-                // Apply disposeOp: mutate canvas for the NEXT frame
+                AdvanceCanvasState(raw);
+                _frameIndex = (_frameIndex + 1) % _apng.Frames.Count;
+                return bmp;
+            }
+
+            // ─────────────────────────────────────────────────────────────────────
+            //  render directly into an existing WriteableBitmap.
+            //  This avoids allocating a new WriteableBitmap (and its W*H*4 buffer)
+            //  on every frame. The target MUST be sized exactly
+            //  CanvasWidth x CanvasHeight and use PixelFormat.Rgba8888 /
+            //  AlphaFormat.Unpremul. After calling this, invalidate the visual
+            //  that displays the bitmap so the new pixels are repainted.
+            // ─────────────────────────────────────────────────────────────────────
+            public void RenderNextFrameTo(WriteableBitmap target, out int delayMs)
+            {
+                if (_disposed) throw new ObjectDisposedException(nameof(ApngComposer));
+                if (target == null) throw new ArgumentNullException(nameof(target));
+                if (target.PixelSize.Width  != _apng.CanvasWidth ||
+                    target.PixelSize.Height != _apng.CanvasHeight)
+                {
+                    throw new ArgumentException(
+                        $"Target size {target.PixelSize} doesn't match canvas " +
+                        $"({_apng.CanvasWidth}x{_apng.CanvasHeight}).", nameof(target));
+                }
+
+                var raw = _apng.Frames[_frameIndex];
+                delayMs = raw.DelayMs;
+
+                if (raw.DisposeOp == DisposeOpPrevious)
+                    _prevCanvas = (byte[])_canvas.Clone();
+
+                byte[] frameRgba = DecodeFrame(raw, _apng.ColorType, _apng.TransparentRgb);
+                CompositeFrame(_canvas, _apng.CanvasWidth, frameRgba, raw);
+
+                // Copy the canvas straight into the existing locked framebuffer.
+                using (var fb = target.Lock())
+                    Marshal.Copy(_canvas, 0, fb.Address, _canvas.Length);
+
+                AdvanceCanvasState(raw);
+                _frameIndex = (_frameIndex + 1) % _apng.Frames.Count;
+            }
+
+            /// <summary>Resets the animation back to the first frame and clears the canvas.</summary>
+            public void Reset()
+            {
+                if (_disposed) throw new ObjectDisposedException(nameof(ApngComposer));
+                Array.Clear(_canvas, 0, _canvas.Length);
+                _prevCanvas = null;
+                _frameIndex = 0;
+            }
+
+            /// <summary>
+            /// Allocates a new WriteableBitmap matching this composer's canvas, suitable
+            /// as the reusable target for <see cref="RenderNextFrameTo"/>.
+            /// </summary>
+            public WriteableBitmap CreateMatchingBitmap() =>
+                new WriteableBitmap(
+                    new PixelSize(_apng.CanvasWidth, _apng.CanvasHeight),
+                    new Vector(96, 96),
+                    PixelFormat.Rgba8888,
+                    AlphaFormat.Unpremul);
+
+            private void AdvanceCanvasState(ApngRawFrame raw)
+            {
                 switch (raw.DisposeOp)
                 {
                     case DisposeOpBackground:
@@ -155,9 +224,6 @@ namespace VP.NET.GUI.Models
                         break;
                     // DisposeOpNone: leave canvas as-is
                 }
-
-                _frameIndex = (_frameIndex + 1) % _apng.Frames.Count;
-                return bmp;
             }
 
             public void Dispose()

@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Media.Imaging;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,17 @@ namespace VP.NET.GUI.Models
                 frames.Clear();
                 keys.Clear();
             }
+
+            /// <summary>
+            /// Allocates a new WriteableBitmap matching this ANI's canvas, suitable
+            /// as the reusable target for <see cref="AniFrame.RenderTo"/>.
+            /// </summary>
+            public WriteableBitmap CreateMatchingBitmap() =>
+                new WriteableBitmap(
+                    new PixelSize(header.width, header.height),
+                    new Vector(96, 96),
+                    Avalonia.Platform.PixelFormat.Rgba8888,
+                    Avalonia.Platform.AlphaFormat.Unpremul);
         }
 
         public struct AniHeader
@@ -104,6 +115,66 @@ namespace VP.NET.GUI.Models
                 }
 
                 return bitmap;
+            }
+
+            // ─────────────────────────────────────────────────────────────────────
+            //  Render this frame into an existing WriteableBitmap.
+            //  Avoids allocating a new WriteableBitmap (+ its W*H*4 buffer)
+            //  every frame. The target MUST be sized header.width x header.height
+            //  and use PixelFormat.Rgba8888 / AlphaFormat.Unpremul.
+            //  After calling this, invalidate the visual displaying the bitmap
+            //  so the new pixels are repainted.
+            // ─────────────────────────────────────────────────────────────────────
+            public void RenderTo(WriteableBitmap target, ref AniHeader header)
+            {
+                if (target == null) throw new ArgumentNullException(nameof(target));
+                if (buffer == null) throw new InvalidOperationException("Frame buffer is null.");
+                if (target.PixelSize.Width  != header.width ||
+                    target.PixelSize.Height != header.height)
+                {
+                    throw new ArgumentException(
+                        $"Target size {target.PixelSize} doesn't match frame " +
+                        $"({header.width}x{header.height}).", nameof(target));
+                }
+
+                int w = header.width;
+                int h = header.height;
+                byte[] palette = header.palette;
+
+                // Write directly into the locked framebuffer to avoid the temp byte[].
+                using var fb = target.Lock();
+                int stride = fb.RowBytes;
+                IntPtr basePtr = fb.Address;
+
+                // We'll build one row of RGBA bytes and Marshal.Copy it per row to
+                // handle stride padding cleanly.
+                byte[] row = new byte[w * 4];
+                int pixelIndex = 0;
+
+                for (int y = 0; y < h; y++)
+                {
+                    for (int x = 0; x < w; x++)
+                    {
+                        byte p = buffer[pixelIndex++];
+                        int dst = x * 4;
+                        if (p == 254)
+                        {
+                            row[dst]     = 0;
+                            row[dst + 1] = 0;
+                            row[dst + 2] = 0;
+                            row[dst + 3] = 0;
+                        }
+                        else
+                        {
+                            int pi = p * 3;
+                            row[dst]     = palette[pi];
+                            row[dst + 1] = palette[pi + 1];
+                            row[dst + 2] = palette[pi + 2];
+                            row[dst + 3] = 255;
+                        }
+                    }
+                    Marshal.Copy(row, 0, basePtr + y * stride, row.Length);
+                }
             }
         }
 
